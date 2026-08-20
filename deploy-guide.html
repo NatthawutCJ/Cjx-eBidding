@@ -277,25 +277,41 @@ git push -u origin main">คัดลอก</button></div>
   </div></div>
 
   <div class="step"><span class="n">9</span><div class="body">
-    <h3>สร้างโปรเจกต์บน Cloudflare Pages</h3>
-    <ol>
-      <li>เปิด <b>dash.cloudflare.com</b> สมัคร (ฟรี ไม่ต้องผูกบัตร)</li>
-      <li>เมนูซ้าย <b>Workers &amp; Pages → Create → Pages → Connect to Git</b></li>
-      <li>อนุญาตให้ Cloudflare เห็น repo <code>cjx-bidding</code> แล้วเลือก repo นั้น</li>
-      <li>กรอกค่า build ตามตารางนี้ให้ตรงทุกช่อง</li>
-    </ol>
+    <h3>สร้างโปรเจกต์บน Cloudflare</h3>
+    <p class="muted">Cloudflare มี 2 แบบ เลือกอันไหนก็ได้ ผลลัพธ์เหมือนกัน ค่าที่กรอกต่างกันเล็กน้อย</p>
+
+    <div class="note crit"><b>Root directory ต้องใส่ <code>app</code></b> ทุกกรณี
+      เพราะ <code>package.json</code> อยู่ในโฟลเดอร์ <code>app</code> ไม่ได้อยู่ที่รากของ repo
+      ถ้าใส่ <code>/</code> จะขึ้น <code>ENOENT: no such file or directory, open '/opt/buildhome/repo/package.json'</code>
+      — นี่คือสาเหตุที่ build fail บ่อยที่สุด</div>
+
+    <h3 style="margin-top:.4rem">แบบ A — Workers (ถ้าหน้าจอมีแท็บ Bindings / Observability และ Deploy command เป็น <code>npx wrangler deploy</code>)</h3>
+    <dl class="kv">
+      <dt>Root directory</dt><dd>app</dd>
+      <dt>Build command</dt><dd>npm run build</dd>
+      <dt>Deploy command</dt><dd>npx wrangler deploy</dd>
+    </dl>
+    <p class="muted">แบบนี้ต้องมีไฟล์ <code>app/wrangler.toml</code> อยู่ใน repo (ผมสร้างให้แล้ว) เพื่อบอกว่าให้เสิร์ฟโฟลเดอร์ <code>dist</code>
+      และต้องแก้ค่า <code>name</code> ในไฟล์นั้นให้ตรงกับชื่อ Worker ของคุณ (Settings → Worker name)</p>
+
+    <h3>แบบ B — Pages</h3>
+    <p class="muted">Workers &amp; Pages → Create → แท็บ <b>Pages</b> → Connect to Git</p>
     <dl class="kv">
       <dt>Framework preset</dt><dd>Vite</dd>
       <dt>Root directory</dt><dd>app</dd>
       <dt>Build command</dt><dd>npm run build</dd>
       <dt>Build output directory</dt><dd>dist</dd>
     </dl>
-    <div class="note warn"><b>ช่อง Root directory ต้องใส่ <code>app</code></b> ถ้าปล่อยว่างจะ build ไม่ผ่านเพราะ Cloudflare หา package.json ไม่เจอ — เป็นสาเหตุที่ build fail บ่อยที่สุด</div>
+    <p class="dim">แบบ B ไม่ต้องใช้ wrangler.toml เลย ถ้าอยากเริ่มใหม่ให้เรียบง่ายก็ลบ Worker เดิมแล้วสร้างเป็น Pages ได้</p>
   </div></div>
 
   <div class="step"><span class="n">10</span><div class="body">
     <h3>ใส่ค่าเชื่อมต่อ แล้วกด Deploy</h3>
-    <p class="muted">ในหน้าเดียวกัน กด <b>Environment variables (Advanced) → Add variable</b> ใส่ 2 ตัวนี้ ค่าเดียวกับในไฟล์ .env</p>
+    <div class="note crit"><b>ต้องใส่ใน “Build variables” ไม่ใช่ “Bindings”</b> —
+      Vite ฝังค่าพวกนี้ตอน build ถ้าใส่ผิดที่ เว็บจะขึ้นหน้าขาวและ Console ฟ้องว่า
+      “ยังไม่ได้ตั้งค่า VITE_SUPABASE_URL”<br>
+      แบบ Workers: Settings → <b>Build → Build variables</b> · แบบ Pages: Settings → <b>Environment variables</b></div>
+    <p class="muted">ใส่ 2 ตัวนี้ ค่าเดียวกับในไฟล์ .env</p>
     <dl class="kv">
       <dt>VITE_SUPABASE_URL</dt><dd>https://xxxx.supabase.co</dd>
       <dt>VITE_SUPABASE_ANON_KEY</dt><dd>eyJhbGciOi...</dd>
@@ -491,7 +507,8 @@ git push">คัดลอก</button></div>
       <tr><td>ซัพพลายเออร์เห็นรายการงานว่างเปล่า</td><td>ยังไม่ได้เชิญบริษัทนั้นเข้างาน</td><td>ล็อกอินเป็นฝ่ายจัดซื้อ สร้างประกาศแล้วติ๊กเชิญบริษัทนั้น</td></tr>
       <tr><td>อัปโหลดไฟล์ขึ้น error violates row-level security</td><td>ยังไม่รัน <code>04_storage.sql</code></td><td>รันไฟล์นั้นใน SQL Editor แล้วลองใหม่</td></tr>
       <tr><td>ราคาไม่ขึ้นเรียลไทม์</td><td>ตาราง bids ยังไม่เข้า publication</td><td>รันบรรทัดท้ายของ <code>01_schema.sql</code> ที่เป็น <code>alter publication</code> ซ้ำอีกครั้ง</td></tr>
-      <tr><td>Cloudflare build fail หา package.json ไม่เจอ</td><td>ไม่ได้ตั้ง Root directory</td><td>Settings → Builds → Root directory ใส่ <code>app</code> แล้ว Retry deployment</td></tr>
+      <tr><td><code>ENOENT ... open '/opt/buildhome/repo/package.json'</code></td><td>Root directory ยังเป็น <code>/</code></td><td>Settings → Build → Root directory ใส่ <code>app</code> → Retry build</td></tr>
+      <tr><td>Deploy ผ่านแต่เปิดเว็บขึ้น 404 หรือหน้าเปล่า (แบบ Workers)</td><td>ไม่มี <code>wrangler.toml</code> บอกว่าให้เสิร์ฟ <code>dist</code></td><td>ใช้ไฟล์ <code>app/wrangler.toml</code> ที่ให้มา และแก้ <code>name</code> ให้ตรงกับชื่อ Worker</td></tr>
       <tr><td>เว็บขึ้นหน้าขาว</td><td>ลืมใส่ env vars ใน Cloudflare</td><td>ใส่ 2 ตัวแล้วกด Retry deployment (ต้อง build ใหม่ค่าจึงมีผล)</td></tr>
       <tr><td><code>syntax error at or near "suppliers"</code> ตอนรัน SQL</td><td>วางไม่ครบไฟล์ หรือมีข้อความถูกเลือกค้างในหน้าต่าง (Supabase รันเฉพาะส่วนที่เลือก)</td><td>ใช้ <code>… | pbcopy</code> คัดลอกทั้งไฟล์ คลิกที่ว่างหนึ่งครั้ง แล้วกด Run · ใช้ไฟล์ <code>00_all_in_one.sql</code> จะรันครั้งเดียวจบ</td></tr>
       <tr><td><code>violates foreign key constraint "profiles_id_fkey"</code></td><td>อีเมล/UUID ในไฟล์ seed ไม่ตรงกับผู้ใช้ใน Authentication</td><td>ไฟล์ seed เวอร์ชันใหม่ค้นหาจากอีเมลและบอกชัดว่าอีเมลไหนหาไม่เจอ — แก้ให้ตรงแล้วรันใหม่</td></tr>

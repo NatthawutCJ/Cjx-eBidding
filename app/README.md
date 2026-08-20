@@ -77,7 +77,15 @@ npm install
 npm run dev               # เปิด http://localhost:5173
 ```
 
-**2.6 Deploy — Cloudflare Pages (แนะนำ)**
+**2.6 Deploy — Cloudflare**
+
+> **Root directory ต้องเป็น `app`** ทุกกรณี เพราะ `package.json` อยู่ในโฟลเดอร์ `app`
+> และค่า `VITE_*` ต้องใส่ใน **Build variables** (Vite ฝังค่าตอน build ไม่ใช่ตอนรัน)
+>
+> ถ้าสร้างเป็น **Worker** (Deploy command `npx wrangler deploy`) ต้องมี `app/wrangler.toml` — มีให้แล้วในโปรเจกต์
+> แก้ `name` ให้ตรงกับชื่อ Worker ของคุณ
+
+**ทางเลือก — Cloudflare Pages**
 push โค้ดขึ้น GitHub → dash.cloudflare.com → Workers & Pages → Create → Pages → Connect to Git
 - Framework preset: `Vite`
 - Root directory: `app`
