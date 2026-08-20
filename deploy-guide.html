@@ -1,0 +1,444 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>คู่มือขึ้นระบบประมูล</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap">
+<style>
+:root{
+  --ground:#f1f4f9; --surface:#ffffff; --surface-2:#e9edf5; --surface-3:#dde3ef;
+  --ink:#0f1729; --ink-2:#455168; --ink-3:#6b7791;
+  --line:#d6dce9; --line-strong:#b7c1d6;
+  --accent:#1E40AF; --accent-2:#16308a; --accent-wash:#e7ecfb; --accent-line:#b6c5ee;
+  --good:#15803d; --good-wash:#e3f2e8;
+  --warn:#8a5808; --warn-wash:#faeed7;
+  --crit:#a63636; --crit-wash:#f8e5e3;
+  --shadow-1:0 1px 2px rgba(15,23,41,.05);
+  --shadow-2:0 1px 2px rgba(15,23,41,.06), 0 12px 30px -16px rgba(15,23,41,.28);
+  --font-d:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text","IBM Plex Sans Thai",system-ui,sans-serif;
+  --font-b:-apple-system,BlinkMacSystemFont,"SF Pro Text","IBM Plex Sans Thai",system-ui,sans-serif;
+  --font-m:ui-monospace,"SF Mono",SFMono-Regular,Menlo,"IBM Plex Mono",monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --ground:#0a0f19; --surface:#111726; --surface-2:#182031; --surface-3:#212a3d;
+  --ink:#e8ecf5; --ink-2:#a4aec3; --ink-3:#7d8798;
+  --line:#232c3e; --line-strong:#354055;
+  --accent:#8ca9f8; --accent-2:#b6c8ff; --accent-wash:#15203c; --accent-line:#2b3d6c;
+  --good:#5ec78b; --good-wash:#122e1f;
+  --warn:#e0aa52; --warn-wash:#33260f;
+  --crit:#ef8d84; --crit-wash:#331c1a;
+  --shadow-1:0 1px 2px rgba(0,0,0,.3);
+  --shadow-2:0 2px 6px rgba(0,0,0,.4), 0 16px 40px -18px rgba(0,0,0,.7);
+}}
+:root[data-theme="dark"]{
+  --ground:#0a0f19; --surface:#111726; --surface-2:#182031; --surface-3:#212a3d;
+  --ink:#e8ecf5; --ink-2:#a4aec3; --ink-3:#7d8798;
+  --line:#232c3e; --line-strong:#354055;
+  --accent:#8ca9f8; --accent-2:#b6c8ff; --accent-wash:#15203c; --accent-line:#2b3d6c;
+  --good:#5ec78b; --good-wash:#122e1f;
+  --warn:#e0aa52; --warn-wash:#33260f;
+  --crit:#ef8d84; --crit-wash:#331c1a;
+  --shadow-1:0 1px 2px rgba(0,0,0,.3);
+  --shadow-2:0 2px 6px rgba(0,0,0,.4), 0 16px 40px -18px rgba(0,0,0,.7);
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--font-b);font-size:15px;line-height:1.6;-webkit-text-size-adjust:100%}
+h1,h2,h3{margin:0;font-family:var(--font-d);font-weight:600;letter-spacing:-.02em;text-wrap:balance}
+h1{font-size:1.75rem;font-weight:700}
+h2{font-size:1.2rem}
+h3{font-size:1rem}
+p{margin:0}
+a{color:var(--accent)}
+code{font-family:var(--font-m);font-size:.88em;background:var(--surface-2);padding:.1em .35em;border-radius:4px;border:1px solid var(--line)}
+.wrap{max-width:840px;margin:0 auto;padding:2rem 1rem 5rem;display:flex;flex-direction:column;gap:1.5rem}
+.eyebrow{font-size:.68rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3)}
+.dim{color:var(--ink-3);font-size:.86rem}
+.muted{color:var(--ink-2)}
+.num{font-family:var(--font-m);font-variant-numeric:tabular-nums}
+
+/* ---- phase ---- */
+.phase{display:flex;flex-direction:column;gap:.9rem}
+.phasehead{display:flex;align-items:baseline;gap:.6rem;flex-wrap:wrap;padding-bottom:.5rem;border-bottom:2px solid var(--accent-line)}
+.phasehead .tag{font-family:var(--font-m);font-size:.72rem;font-weight:600;color:var(--accent);background:var(--accent-wash);
+  border:1px solid var(--accent-line);padding:.14rem .5rem;border-radius:999px}
+
+/* ---- step ---- */
+.step{display:grid;grid-template-columns:auto 1fr;gap:.9rem;background:var(--surface);border:1px solid var(--line);
+  border-radius:12px;padding:1rem;box-shadow:var(--shadow-1)}
+.step > .n{width:28px;height:28px;border-radius:9px;background:var(--accent);color:#fff;display:grid;place-items:center;
+  font-family:var(--font-m);font-size:.82rem;font-weight:600;flex:none}
+:root[data-theme="dark"] .step > .n,:root:not([data-theme="light"]) .step > .n{color:#0a1633}
+@media (prefers-color-scheme: light){:root:not([data-theme="dark"]) .step > .n{color:#fff}}
+.step .body{min-width:0;display:flex;flex-direction:column;gap:.6rem}
+.step h3 + p{margin-top:-.2rem}
+.step ol,.step ul{margin:0;padding-left:1.2rem;display:flex;flex-direction:column;gap:.3rem}
+.step li{padding-left:.1rem}
+.step li b{font-weight:600}
+
+/* ---- code ---- */
+.code{position:relative;background:var(--surface-2);border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.code pre{margin:0;padding:.7rem 4.6rem .7rem .8rem;font-family:var(--font-m);font-size:.84rem;line-height:1.65;
+  overflow-x:auto;white-space:pre;color:var(--ink)}
+.code .copy{position:absolute;top:.45rem;right:.45rem;font:inherit;font-size:.72rem;font-weight:600;cursor:pointer;
+  background:var(--surface);color:var(--ink-2);border:1px solid var(--line-strong);border-radius:6px;padding:.2rem .5rem}
+.code .copy:hover{background:var(--accent-wash);color:var(--accent-2);border-color:var(--accent-line)}
+.code .copy.done{color:var(--good);border-color:var(--good)}
+
+/* ---- callout ---- */
+.note{border-left:3px solid var(--accent);background:var(--accent-wash);padding:.7rem .85rem;border-radius:0 8px 8px 0;font-size:.9rem;color:var(--ink-2)}
+.note.warn{border-left-color:var(--warn);background:var(--warn-wash)}
+.note.crit{border-left-color:var(--crit);background:var(--crit-wash)}
+.note.good{border-left-color:var(--good);background:var(--good-wash)}
+.note b{color:var(--ink)}
+
+/* ---- fields ---- */
+.kv{display:grid;grid-template-columns:auto 1fr;gap:.35rem .8rem;font-size:.9rem;background:var(--surface-2);
+  border:1px solid var(--line);border-radius:8px;padding:.7rem .8rem}
+.kv dt{color:var(--ink-3)}
+.kv dd{margin:0;font-family:var(--font-m);font-size:.85rem;overflow-wrap:anywhere}
+@media (max-width:560px){.kv{grid-template-columns:1fr;gap:.1rem}.kv dd{margin-bottom:.45rem}}
+
+/* ---- checklist ---- */
+.check{display:flex;flex-direction:column;gap:.1rem}
+.check label{display:grid;grid-template-columns:auto 1fr;gap:.6rem;align-items:start;padding:.5rem .6rem;border-radius:8px;cursor:pointer;font-size:.92rem}
+.check label:hover{background:var(--surface-2)}
+.check input{width:17px;height:17px;margin-top:.15rem;accent-color:var(--accent);flex:none}
+.check input:checked + span{color:var(--ink-3);text-decoration:line-through}
+
+/* ---- table ---- */
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.88rem;min-width:520px}
+th,td{text-align:left;padding:.6rem .7rem;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:.72rem;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-3);font-weight:600;background:var(--surface-2)}
+tr:last-child td{border-bottom:0}
+td code{font-size:.82em}
+.tablewrap + .dim{margin-top:.4rem}
+
+/* ---- edit flow cards ---- */
+.flows{display:grid;gap:.9rem;grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
+.flow{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:.9rem;display:flex;flex-direction:column;gap:.5rem}
+.flow .badge{font-size:.7rem;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--accent-2);
+  background:var(--accent-wash);border:1px solid var(--accent-line);border-radius:999px;padding:.12rem .5rem;align-self:flex-start}
+.flow .badge.sql{color:var(--warn);background:var(--warn-wash);border-color:color-mix(in srgb,var(--warn) 30%,transparent)}
+.flow .badge.data{color:var(--good);background:var(--good-wash);border-color:color-mix(in srgb,var(--good) 30%,transparent)}
+.flow ol{margin:0;padding-left:1.15rem;font-size:.88rem;color:var(--ink-2);display:flex;flex-direction:column;gap:.25rem}
+.hero{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:1.2rem;box-shadow:var(--shadow-2);
+  display:flex;flex-direction:column;gap:.6rem}
+.meta{display:flex;gap:.5rem;flex-wrap:wrap;font-size:.78rem}
+.meta span{background:var(--surface-2);border:1px solid var(--line);border-radius:999px;padding:.16rem .6rem;color:var(--ink-2)}
+</style>
+
+<div class="wrap">
+
+<header class="hero">
+  <span class="eyebrow">ระบบประมูลจัดซื้อ · CJx e-Bidding</span>
+  <h1>คู่มือขึ้นระบบ และวิธีแก้ไขภายหลัง</h1>
+  <p class="muted">ทำตามลำดับตั้งแต่ต้นจนเว็บใช้งานได้จริง ไม่ต้องมีพื้นฐานเขียนโปรแกรม
+    ทุกคำสั่งกดคัดลอกได้ ทุกช่องที่ต้องกรอกระบุค่าไว้ให้ครบ</p>
+  <div class="meta">
+    <span>ใช้เวลาประมาณ 45–60 นาที</span>
+    <span>ค่าใช้จ่าย 0 บาท</span>
+    <span>ต้องมี: อีเมล + GitHub</span>
+  </div>
+  <p class="dim">ไฟล์โค้ดอยู่ที่ <code>~/Desktop/supplier-bidding/app</code> · ถ้าติดตรงไหนดูหัวข้อ “ปัญหาที่เจอบ่อย” ท้ายหน้า</p>
+</header>
+
+<!-- ============ PHASE A ============ -->
+<section class="phase">
+  <div class="phasehead"><span class="tag">ช่วง A</span><h2>เตรียมเครื่องและฐานข้อมูล</h2>
+    <span class="dim">ขั้น 1–7</span></div>
+
+  <div class="step"><span class="n">1</span><div class="body">
+    <h3>ติดตั้ง Node.js</h3>
+    <p class="muted">เครื่องคุณยังไม่มี Node ซึ่งเป็นตัวรันเครื่องมือแปลงโค้ด ติดตั้งครั้งเดียวใช้ได้ตลอด</p>
+    <ol>
+      <li>เปิด <b>nodejs.org</b> กดปุ่มดาวน์โหลดฝั่งซ้ายที่เขียนว่า <b>LTS</b></li>
+      <li>เปิดไฟล์ <code>.pkg</code> ที่ดาวน์โหลดมา กด Continue ไปเรื่อยๆ จนจบ</li>
+      <li>เปิดแอป <b>Terminal</b> (กด ⌘+Space พิมพ์ terminal) แล้วรันคำสั่งนี้เพื่อตรวจ</li>
+    </ol>
+    <div class="code"><pre>node -v
+npm -v</pre><button class="copy" data-copy="node -v
+npm -v">คัดลอก</button></div>
+    <p class="dim">ต้องขึ้นเลขเวอร์ชันทั้งสองบรรทัด เช่น <code>v22.14.0</code> และ <code>10.9.2</code> ถ้าขึ้น command not found ให้ปิด Terminal แล้วเปิดใหม่</p>
+  </div></div>
+
+  <div class="step"><span class="n">2</span><div class="body">
+    <h3>ติดตั้งไลบรารีของโปรเจกต์</h3>
+    <div class="code"><pre>cd ~/Desktop/supplier-bidding/app
+npm install</pre><button class="copy" data-copy="cd ~/Desktop/supplier-bidding/app
+npm install">คัดลอก</button></div>
+    <p class="dim">ใช้เวลา 1–2 นาที จะมีโฟลเดอร์ <code>node_modules</code> เพิ่มขึ้นมา ถ้ามีคำเตือนสีเหลือง (warn) ไม่เป็นไร ข้ามได้</p>
+  </div></div>
+
+  <div class="step"><span class="n">3</span><div class="body">
+    <h3>สร้างโปรเจกต์ Supabase</h3>
+    <ol>
+      <li>เปิด <b>supabase.com</b> → Start your project → สมัครด้วย GitHub หรืออีเมล</li>
+      <li>กด <b>New project</b> ตั้งชื่อ <code>cjx-bidding</code></li>
+      <li>ตั้ง <b>Database Password</b> แล้วเก็บไว้ในที่ปลอดภัย (ใช้ตอนต่อฐานข้อมูลตรง)</li>
+      <li>Region เลือก <b>Southeast Asia (Singapore)</b> — สำคัญ เพราะใกล้ไทยที่สุด</li>
+      <li>กด Create แล้วรอประมาณ 2 นาที</li>
+    </ol>
+    <div class="note warn"><b>ห้ามเลือก region อื่น</b> ถ้าเลือกอเมริกา/ยุโรป การกดหยอดราคาจะหน่วงขึ้นเห็นได้ชัด และย้าย region ทีหลังไม่ได้ ต้องสร้างโปรเจกต์ใหม่</div>
+  </div></div>
+
+  <div class="step"><span class="n">4</span><div class="body">
+    <h3>รันไฟล์ SQL 4 ไฟล์ ตามลำดับ</h3>
+    <p class="muted">ในหน้า Supabase เลือกเมนู <b>SQL Editor</b> → New query → เปิดไฟล์จากโฟลเดอร์
+      <code>app/supabase/</code> คัดลอกทั้งไฟล์ไปวาง แล้วกด <b>Run</b> ทำทีละไฟล์ตามลำดับนี้</p>
+    <ol>
+      <li><code>01_schema.sql</code> — สร้างตารางทั้งหมด</li>
+      <li><code>02_rls.sql</code> — กติกาการมองเห็นราคา</li>
+      <li><code>03_functions.sql</code> — ฟังก์ชันยื่นราคา เปิดซอง ประกาศผล ค้อน</li>
+      <li><code>04_storage.sql</code> — ที่เก็บไฟล์แนบ</li>
+    </ol>
+    <div class="note"><b>ต้องขึ้น Success ทุกไฟล์</b> ถ้าไฟล์ไหน error ให้หยุดก่อน อย่ารันไฟล์ถัดไป เพราะไฟล์หลังอ้างถึงของในไฟล์หน้า</div>
+  </div></div>
+
+  <div class="step"><span class="n">5</span><div class="body">
+    <h3>สร้างผู้ใช้</h3>
+    <p class="muted">เมนู <b>Authentication → Users → Add user → Create new user</b></p>
+    <ol>
+      <li>สร้าง 1 บัญชีสำหรับฝ่ายจัดซื้อ และ 1 บัญชีต่อ 1 ซัพพลายเออร์ (เริ่มด้วย 3 ราย)</li>
+      <li>กรอกอีเมล + รหัสผ่าน และ <b>ติ๊ก Auto Confirm User</b> ทุกครั้ง</li>
+      <li>คลิกที่ผู้ใช้แต่ละคน คัดลอก <b>UID</b> (เลขยาวๆ) เก็บไว้ทั้ง 4 ค่า</li>
+    </ol>
+    <div class="note crit"><b>ถ้าไม่ติ๊ก Auto Confirm</b> จะเข้าสู่ระบบไม่ได้และขึ้นว่าอีเมลหรือรหัสผ่านไม่ถูกต้อง ซึ่งเป็นปัญหาที่เจอบ่อยที่สุด</div>
+  </div></div>
+
+  <div class="step"><span class="n">6</span><div class="body">
+    <h3>ใส่ข้อมูลตั้งต้น</h3>
+    <ol>
+      <li>เปิดไฟล์ <code>app/supabase/05_seed.sql</code> ด้วย TextEdit</li>
+      <li>แก้ UUID 4 บรรทัดบนสุด ให้ตรงกับ UID ที่คัดลอกไว้ในขั้นที่ 5</li>
+      <li>คัดลอกทั้งไฟล์ไปวางใน SQL Editor แล้วกด Run</li>
+    </ol>
+    <p class="dim">จะได้บริษัทผู้ขาย 3 ราย โปรไฟล์ผู้ใช้ 4 คน และประกาศตัวอย่าง 2 งาน (เปิดราคา 1 / ปิดราคา 1)</p>
+  </div></div>
+
+  <div class="step"><span class="n">7</span><div class="body">
+    <h3>ต่อโค้ดเข้ากับ Supabase แล้วลองรันในเครื่อง</h3>
+    <p class="muted">เอาค่าจาก <b>Project Settings → API</b> มาใส่ในไฟล์ <code>.env</code></p>
+    <div class="code"><pre>cd ~/Desktop/supplier-bidding/app
+cp .env.example .env
+open -e .env</pre><button class="copy" data-copy="cd ~/Desktop/supplier-bidding/app
+cp .env.example .env
+open -e .env">คัดลอก</button></div>
+    <dl class="kv">
+      <dt>VITE_SUPABASE_URL</dt><dd>Project URL เช่น https://abcd1234.supabase.co</dd>
+      <dt>VITE_SUPABASE_ANON_KEY</dt><dd>anon public key (ตัวยาวที่ขึ้นต้น eyJ...)</dd>
+    </dl>
+    <p class="muted">บันทึกไฟล์ (⌘S) ปิดหน้าต่าง แล้วสั่งรัน</p>
+    <div class="code"><pre>npm run dev</pre><button class="copy" data-copy="npm run dev">คัดลอก</button></div>
+    <p class="dim">เปิดเบราว์เซอร์ไปที่ <code>http://localhost:5173</code> แล้วลองเข้าสู่ระบบด้วยบัญชีที่สร้างไว้ · หยุดเซิร์ฟเวอร์ด้วย <code>Ctrl+C</code></p>
+    <div class="note crit"><b>ห้ามใช้ service_role key</b> เด็ดขาด คีย์นั้นข้าม RLS ทั้งหมด ใครเปิดหน้าเว็บก็อ่านราคาทุกใบได้ ใช้ <b>anon</b> เท่านั้น</div>
+  </div></div>
+</section>
+
+<!-- ============ PHASE B ============ -->
+<section class="phase">
+  <div class="phasehead"><span class="tag">ช่วง B</span><h2>ขึ้นเว็บจริงบน Cloudflare Pages</h2>
+    <span class="dim">ขั้น 8–11</span></div>
+
+  <div class="step"><span class="n">8</span><div class="body">
+    <h3>เอาโค้ดขึ้น GitHub</h3>
+    <ol>
+      <li>เปิด <b>github.com</b> สมัคร (ฟรี) → กด <b>New repository</b></li>
+      <li>ตั้งชื่อ <code>cjx-bidding</code> เลือก <b>Private</b> แล้วกด Create — <b>อย่า</b> ติ๊ก add README</li>
+      <li>กลับมาที่ Terminal รันคำสั่งด้านล่าง (แก้ <code>ชื่อบัญชี</code> เป็นชื่อ GitHub ของคุณ)</li>
+    </ol>
+    <div class="code"><pre>cd ~/Desktop/supplier-bidding
+git init
+git add .
+git commit -m "ระบบประมูลจัดซื้อ CJx"
+git branch -M main
+git remote add origin https://github.com/ชื่อบัญชี/cjx-bidding.git
+git push -u origin main</pre><button class="copy" data-copy="cd ~/Desktop/supplier-bidding
+git init
+git add .
+git commit -m &quot;ระบบประมูลจัดซื้อ CJx&quot;
+git branch -M main
+git remote add origin https://github.com/ชื่อบัญชี/cjx-bidding.git
+git push -u origin main">คัดลอก</button></div>
+    <div class="note good"><b>ไฟล์ .env ไม่ถูกอัปขึ้น GitHub</b> เพราะมี <code>.gitignore</code> กันไว้แล้ว คีย์ของคุณจะไม่หลุด เดี๋ยวไปใส่ในหน้า Cloudflare แทน</div>
+    <p class="dim">ถ้า git ยังไม่มีในเครื่อง macOS จะเด้งถามให้ติดตั้ง Command Line Tools กด Install แล้วรอ · ถ้าถามรหัสผ่านตอน push ให้ใช้ Personal Access Token จาก GitHub → Settings → Developer settings ไม่ใช่รหัสผ่านบัญชี</p>
+  </div></div>
+
+  <div class="step"><span class="n">9</span><div class="body">
+    <h3>สร้างโปรเจกต์บน Cloudflare Pages</h3>
+    <ol>
+      <li>เปิด <b>dash.cloudflare.com</b> สมัคร (ฟรี ไม่ต้องผูกบัตร)</li>
+      <li>เมนูซ้าย <b>Workers &amp; Pages → Create → Pages → Connect to Git</b></li>
+      <li>อนุญาตให้ Cloudflare เห็น repo <code>cjx-bidding</code> แล้วเลือก repo นั้น</li>
+      <li>กรอกค่า build ตามตารางนี้ให้ตรงทุกช่อง</li>
+    </ol>
+    <dl class="kv">
+      <dt>Framework preset</dt><dd>Vite</dd>
+      <dt>Root directory</dt><dd>app</dd>
+      <dt>Build command</dt><dd>npm run build</dd>
+      <dt>Build output directory</dt><dd>dist</dd>
+    </dl>
+    <div class="note warn"><b>ช่อง Root directory ต้องใส่ <code>app</code></b> ถ้าปล่อยว่างจะ build ไม่ผ่านเพราะ Cloudflare หา package.json ไม่เจอ — เป็นสาเหตุที่ build fail บ่อยที่สุด</div>
+  </div></div>
+
+  <div class="step"><span class="n">10</span><div class="body">
+    <h3>ใส่ค่าเชื่อมต่อ แล้วกด Deploy</h3>
+    <p class="muted">ในหน้าเดียวกัน กด <b>Environment variables (Advanced) → Add variable</b> ใส่ 2 ตัวนี้ ค่าเดียวกับในไฟล์ .env</p>
+    <dl class="kv">
+      <dt>VITE_SUPABASE_URL</dt><dd>https://xxxx.supabase.co</dd>
+      <dt>VITE_SUPABASE_ANON_KEY</dt><dd>eyJhbGciOi...</dd>
+    </dl>
+    <p class="muted">กด <b>Save and Deploy</b> รอ 1–2 นาที จะได้ลิงก์ <code>ชื่อโปรเจกต์.pages.dev</code> เปิดใช้งานได้ทันที</p>
+    <div class="note"><b>แก้ค่าทีหลังได้</b> ที่ Settings → Environment variables แต่ต้องกด <b>Retry deployment</b> ครั้งหนึ่ง ค่าใหม่จึงมีผล เพราะค่าถูกฝังตอน build</div>
+  </div></div>
+
+  <div class="step"><span class="n">11</span><div class="body">
+    <h3>ผูกโดเมนบริษัท (ถ้าต้องการ)</h3>
+    <ol>
+      <li>ในโปรเจกต์ Pages → แท็บ <b>Custom domains → Set up a domain</b></li>
+      <li>ใส่ชื่อที่ต้องการ เช่น <code>bidding.cjmart.co.th</code></li>
+      <li>Cloudflare จะบอกค่า CNAME ที่ต้องเพิ่ม ส่งให้ทีม IT เพิ่มใน DNS ของบริษัท</li>
+    </ol>
+    <p class="dim">ใบรับรอง HTTPS ออกให้อัตโนมัติฟรี ใช้ได้ภายในไม่กี่นาทีหลัง DNS อัปเดต</p>
+  </div></div>
+</section>
+
+<!-- ============ PHASE C ============ -->
+<section class="phase">
+  <div class="phasehead"><span class="tag">ช่วง C</span><h2>ตรวจก่อนเปิดใช้จริง</h2>
+    <span class="dim">ทำครั้งเดียวก่อนเชิญซัพพลายเออร์เข้าระบบ</span></div>
+
+  <div class="step" style="grid-template-columns:1fr"><div class="body">
+    <p class="muted">ติ๊กไปทีละข้อ ข้อที่ 6–7 สำคัญที่สุด เพราะถ้าพลาดจะเสียส่วนต่างราคาทุกงาน</p>
+    <div class="check">
+      <label><input type="checkbox"><span>เข้าสู่ระบบได้ทั้งบัญชีฝ่ายจัดซื้อและซัพพลายเออร์</span></label>
+      <label><input type="checkbox"><span>ซัพพลายเออร์เห็นเฉพาะงานที่ถูกเชิญ ไม่เห็นงานอื่น</span></label>
+      <label><input type="checkbox"><span>หยอดราคาในงานเปิดราคาได้ และเปิดอีกเบราว์เซอร์เป็นผู้ขายรายที่สองแล้วเห็นราคาขึ้นเรียลไทม์</span></label>
+      <label><input type="checkbox"><span>งานปิดราคา: หยอดซ้ำได้หลายครั้ง และขึ้นสถานะค้อนถูกต้อง</span></label>
+      <label><input type="checkbox"><span>อัปโหลดเอกสารหลังปิดประมูลได้ และเปิดไฟล์กลับมาดูได้</span></label>
+      <label><input type="checkbox"><span><b>ทดสอบรั่ว 1:</b> ล็อกอินเป็นผู้ขาย เปิด DevTools → Console รัน <code>await window.supabase.from('tender_internal').select('*')</code> ต้องได้ <code>[]</code></span></label>
+      <label><input type="checkbox"><span><b>ทดสอบรั่ว 2:</b> ในงานปิดราคาที่ยังไม่เปิดซอง รัน <code>await window.supabase.from('bids').select('supplier_id,total')</code> ต้องเห็นแค่ใบของบริษัทตัวเอง</span></label>
+      <label><input type="checkbox"><span>ฝ่ายจัดซื้อกดเปิดซองก่อนหมดเวลา<b>ไม่ได้</b> (ปุ่มต้องกดไม่ได้ และถ้ายิง API ตรงต้อง error)</span></label>
+    </div>
+    <div class="note warn"><b>วิธีเปิดใช้ทดสอบข้อ 6–7</b> เพิ่มบรรทัด <code>window.supabase = supabase</code> ท้ายไฟล์ <code>src/lib/supabase.js</code> ชั่วคราว
+      ทดสอบเสร็จ<b>ลบออกแล้ว push ใหม่</b> ก่อนเปิดใช้จริง</div>
+  </div></div>
+</section>
+
+<!-- ============ วิธีแก้ ============ -->
+<section class="phase">
+  <div class="phasehead"><span class="tag">แก้ไข</span><h2>ต่อไปถ้าจะแก้ ต้องทำอะไร</h2></div>
+  <p class="muted">มี 3 แบบ แยกกันชัดเจน เลือกตามสิ่งที่จะแก้</p>
+
+  <div class="flows">
+    <div class="flow">
+      <span class="badge">แบบ 1 · แก้หน้าเว็บ</span>
+      <p class="dim" style="font-size:.88rem">ข้อความ สี ขนาด เปอร์เซ็นต์ปุ่ม เพิ่ม/ลดช่องในฟอร์ม</p>
+      <ol>
+        <li>แก้ไฟล์ในโฟลเดอร์ <code>app/src</code></li>
+        <li>ทดสอบในเครื่อง <code>npm run dev</code></li>
+        <li>ส่งขึ้น GitHub 3 คำสั่ง (ด้านล่าง)</li>
+        <li>Cloudflare build ใหม่เองอัตโนมัติ ~1 นาที</li>
+      </ol>
+    </div>
+    <div class="flow">
+      <span class="badge sql">แบบ 2 · แก้กติกา</span>
+      <p class="dim" style="font-size:.88rem">ใครเห็นราคาเมื่อไร กติกาค้อน รูปแบบเลขที่งาน เงื่อนไขการยื่น</p>
+      <ol>
+        <li>แก้ไฟล์ใน <code>app/supabase/</code></li>
+        <li>คัดลอกเฉพาะฟังก์ชันที่แก้ ไปวางใน <b>SQL Editor</b> แล้ว Run</li>
+        <li>มีผลทันที ไม่ต้อง deploy หน้าเว็บ</li>
+        <li>push ขึ้น GitHub ด้วย เพื่อไม่ให้ไฟล์กับของจริงต่างกัน</li>
+      </ol>
+    </div>
+    <div class="flow">
+      <span class="badge data">แบบ 3 · แก้ข้อมูล</span>
+      <p class="dim" style="font-size:.88rem">เพิ่มบริษัทผู้ขาย เพิ่มผู้ใช้ แก้ชื่อ แก้เลขผู้เสียภาษี ลบงานทดสอบ</p>
+      <ol>
+        <li>Supabase → <b>Table Editor</b></li>
+        <li>เลือกตาราง เช่น <code>suppliers</code> แล้วกด Insert row</li>
+        <li>ผู้ใช้ใหม่: Authentication → Add user ก่อน แล้วเพิ่มแถวใน <code>profiles</code></li>
+        <li>ไม่ต้องแตะโค้ดเลย</li>
+      </ol>
+    </div>
+  </div>
+
+  <div class="step" style="grid-template-columns:1fr"><div class="body">
+    <h3>3 คำสั่งสำหรับส่งการแก้ขึ้นเว็บ</h3>
+    <div class="code"><pre>cd ~/Desktop/supplier-bidding
+git add .
+git commit -m "แก้ข้อความหน้าหยอดราคา"
+git push</pre><button class="copy" data-copy="cd ~/Desktop/supplier-bidding
+git add .
+git commit -m &quot;แก้ข้อความหน้าหยอดราคา&quot;
+git push">คัดลอก</button></div>
+    <p class="dim">เปลี่ยนข้อความในเครื่องหมายคำพูดเป็นสิ่งที่แก้ในรอบนั้น เพื่อย้อนดูภายหลังได้</p>
+    <div class="note good"><b>ย้อนกลับได้ทุกเวอร์ชัน</b> ถ้า deploy แล้วพัง เข้า Cloudflare → Deployments → เลือกเวอร์ชันก่อนหน้า → Rollback ใช้เวลาไม่ถึง 10 วินาที</div>
+  </div></div>
+
+  <div class="step" style="grid-template-columns:1fr"><div class="body">
+    <h3>ตำแหน่งที่แก้บ่อย</h3>
+    <div class="tablewrap"><table>
+      <thead><tr><th>อยากแก้</th><th>ไฟล์</th><th>มองหา</th></tr></thead>
+      <tbody>
+        <tr><td>สีหลักของระบบ</td><td><code>src/styles.css</code></td><td><code>--accent: #1E40AF</code> (มี 3 ที่ รวมธีมมืด)</td></tr>
+        <tr><td>เปอร์เซ็นต์ปุ่มหยอดราคา</td><td><code>src/components/BidForm.jsx</code></td><td><code>[5, 10, 15, 20].map</code></td></tr>
+        <tr><td>จำนวนวันส่งเอกสาร</td><td><code>src/lib/format.js</code></td><td><code>DOCS_GRACE_DAYS = 3</code></td></tr>
+        <tr><td>รูปแบบวันที่ / สกุลเงิน</td><td><code>src/lib/format.js</code></td><td><code>dmy()</code> · <code>baht()</code></td></tr>
+        <tr><td>รูปแบบเลขที่งาน</td><td><code>supabase/03_functions.sql</code></td><td><code>next_tender_code()</code></td></tr>
+        <tr><td>กติกาค้อน</td><td><code>supabase/03_functions.sql</code></td><td><code>hammer_holder()</code> · <code>my_hammer_state()</code></td></tr>
+        <tr><td>ใครเห็นราคาเมื่อไร</td><td><code>supabase/02_rls.sql</code></td><td><code>can_see_prices()</code></td></tr>
+        <tr><td>เอกสารที่ต้องแนบตั้งต้น</td><td><code>src/components/CreateTender.jsx</code></td><td><code>DEFAULT_DOCS</code></td></tr>
+      </tbody>
+    </table></div>
+    <p class="dim">รายละเอียดเต็มพร้อมตัวอย่างการเพิ่มฟิลด์ใหม่ทีละขั้น อยู่ในไฟล์ <code>app/README.md</code></p>
+  </div></div>
+</section>
+
+<!-- ============ ปัญหา ============ -->
+<section class="phase">
+  <div class="phasehead"><span class="tag">แก้ปัญหา</span><h2>ปัญหาที่เจอบ่อย</h2></div>
+  <div class="tablewrap"><table>
+    <thead><tr><th>อาการ</th><th>สาเหตุ</th><th>วิธีแก้</th></tr></thead>
+    <tbody>
+      <tr><td>ขึ้นว่า “ยังไม่ได้ตั้งค่า VITE_SUPABASE_URL”</td><td>ไม่มีไฟล์ .env หรือชื่อตัวแปรผิด</td><td>ตรวจว่าไฟล์ชื่อ <code>.env</code> อยู่ในโฟลเดอร์ <code>app</code> แล้วปิด <code>npm run dev</code> เปิดใหม่</td></tr>
+      <tr><td>เข้าสู่ระบบไม่ได้ บอกว่าอีเมลหรือรหัสผ่านไม่ถูกต้อง</td><td>ตอนสร้างผู้ใช้ไม่ได้ติ๊ก Auto Confirm</td><td>Authentication → คลิกผู้ใช้ → Confirm email หรือลบแล้วสร้างใหม่ให้ติ๊กด้วย</td></tr>
+      <tr><td>เข้าสู่ระบบผ่าน แต่ขึ้นว่าโหลดข้อมูลผู้ใช้ไม่ได้</td><td>ยังไม่มีแถวใน <code>profiles</code></td><td>รัน <code>05_seed.sql</code> หรือเพิ่มแถวใน Table Editor ให้ UUID ตรงกับผู้ใช้</td></tr>
+      <tr><td>ซัพพลายเออร์เห็นรายการงานว่างเปล่า</td><td>ยังไม่ได้เชิญบริษัทนั้นเข้างาน</td><td>ล็อกอินเป็นฝ่ายจัดซื้อ สร้างประกาศแล้วติ๊กเชิญบริษัทนั้น</td></tr>
+      <tr><td>อัปโหลดไฟล์ขึ้น error violates row-level security</td><td>ยังไม่รัน <code>04_storage.sql</code></td><td>รันไฟล์นั้นใน SQL Editor แล้วลองใหม่</td></tr>
+      <tr><td>ราคาไม่ขึ้นเรียลไทม์</td><td>ตาราง bids ยังไม่เข้า publication</td><td>รันบรรทัดท้ายของ <code>01_schema.sql</code> ที่เป็น <code>alter publication</code> ซ้ำอีกครั้ง</td></tr>
+      <tr><td>Cloudflare build fail หา package.json ไม่เจอ</td><td>ไม่ได้ตั้ง Root directory</td><td>Settings → Builds → Root directory ใส่ <code>app</code> แล้ว Retry deployment</td></tr>
+      <tr><td>เว็บขึ้นหน้าขาว</td><td>ลืมใส่ env vars ใน Cloudflare</td><td>ใส่ 2 ตัวแล้วกด Retry deployment (ต้อง build ใหม่ค่าจึงมีผล)</td></tr>
+      <tr><td>ระบบใช้งานไม่ได้หลังหยุดใช้นานหลายวัน</td><td>โปรเจกต์ Supabase ฟรีถูก pause หลังไม่มีการใช้งาน 7 วัน</td><td>เข้า Supabase กด Restore project ใช้ได้ตามปกติ ถ้ามีคนใช้ทุกวันจะไม่โดน</td></tr>
+    </tbody>
+  </table></div>
+  <p class="dim">ถ้าเจออาการอื่น ให้คัดลอกข้อความ error ทั้งบรรทัด (จาก Terminal หรือ Console ในเบราว์เซอร์) มาถามได้เลย</p>
+</section>
+
+<p class="dim" style="text-align:center">คู่มือนี้อ้างอิงโค้ดชุดที่อยู่ใน <code>~/Desktop/supplier-bidding/app</code> · ถ้าโครงไฟล์เปลี่ยน ให้แก้คู่มือตามด้วย</p>
+</div>
+
+<script>
+document.addEventListener('click', async e => {
+  const b = e.target.closest('.copy');
+  if (!b) return;
+  const text = b.dataset.copy || b.parentElement.querySelector('pre').textContent;
+  let ok = false;
+  try { await navigator.clipboard.writeText(text); ok = true; }
+  catch (_) {
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+      document.body.appendChild(ta); ta.select();
+      ok = document.execCommand('copy'); ta.remove();
+    } catch (_) { ok = false; }
+  }
+  if (!ok) {                                  // คัดลอกอัตโนมัติไม่ได้ (เบราว์เซอร์บล็อก) — เลือกข้อความให้เลย กด ⌘C ได้ทันที
+    const pre = b.parentElement.querySelector('pre');
+    const r = document.createRange(); r.selectNodeContents(pre);
+    const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r);
+  }
+  const old = b.textContent;
+  b.textContent = ok ? 'คัดลอกแล้ว' : 'เลือกไว้แล้ว กด ⌘C';
+  b.classList.toggle('done', ok);
+  setTimeout(() => { b.textContent = old; b.classList.remove('done'); }, 1800);
+});
+</script>
