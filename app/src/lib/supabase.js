@@ -19,7 +19,8 @@ export const supabase = configError ? null
       auth: { persistSession: true, autoRefreshToken: true, storageKey: 'cjx-bidding-auth' },
     })))
 
-// client แยกสำหรับ "ตรวจรหัสผ่านเดิม" เท่านั้น
+// client แยก เผื่อต้องตรวจรหัสผ่านผ่าน Auth API ในอนาคต
+// (ตอนนี้การเปลี่ยนรหัสใช้ฟังก์ชันในฐานข้อมูลแทน จึงไม่ได้เรียกใช้)
 //   - persistSession: false  → ไม่แตะ session ที่ล็อกอินอยู่
 //   - storageKey ต่างกัน     → ไม่แย่ง lock กับ client หลัก
 // จึงตรวจรหัสเดิมได้โดยไม่ทำให้ client หลักค้างและไม่ทำให้หลุดล็อกอิน

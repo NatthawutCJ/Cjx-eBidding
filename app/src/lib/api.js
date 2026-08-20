@@ -1,4 +1,4 @@
-import { supabase, verifyClient } from './supabase'
+import { supabase } from './supabase'
 
 // ============================ auth / profile ============================
 export async function signIn(email, password) {
@@ -17,41 +17,23 @@ const withTimeout = (promise, ms, label) => Promise.race([
     `ถ้ายังไม่หายให้หยุด npm run dev แล้วสั่งใหม่`)), ms)),
 ])
 
-// ยืนยันรหัสเดิมก่อนเปลี่ยน (กันคนที่แอบใช้เครื่องที่เปิดค้างไว้)
+// เปลี่ยนรหัสผ่านผ่านฟังก์ชันในฐานข้อมูล (09_self_password.sql)
+// ไม่ใช้ supabase.auth.updateUser เพราะคำสั่งนั้นค้างในโปรเจกต์ที่ยังไม่ได้ต่อ SMTP
+// ฟังก์ชันฝั่ง server ตรวจรหัสเดิมเองและเขียนรหัสใหม่แบบ bcrypt จึงเร็วและไม่ต้องพึ่งอีเมล
 export async function changePassword(email, currentPassword, newPassword) {
   if (newPassword.length < 8) throw new Error('รหัสผ่านใหม่ต้องยาวอย่างน้อย 8 ตัวอักษร')
   if (newPassword === currentPassword) throw new Error('รหัสผ่านใหม่ต้องไม่ซ้ำกับรหัสเดิม')
 
-  // ขั้น 1 ตรวจรหัสเดิมด้วย client แยก — ไม่แตะ session หลัก ไม่แย่ง lock จึงไม่ค้าง
-  console.info('[รหัสผ่าน] ขั้น 1/3 ตรวจรหัสเดิม')
-  const { error: reauth } = await withTimeout(
-    verifyClient().auth.signInWithPassword({ email, password: currentPassword }),
-    12000, 'ขั้นตรวจรหัสเดิม')
-  if (reauth) {
-    console.warn('[รหัสผ่าน] ตรวจรหัสเดิมไม่ผ่าน:', reauth.message)
-    throw new Error('รหัสผ่านเดิมไม่ถูกต้อง')
-  }
-
-  // ขั้น 2 เปลี่ยนรหัสจริงบน session ที่ล็อกอินอยู่
-  console.info('[รหัสผ่าน] ขั้น 2/3 บันทึกรหัสใหม่')
+  console.info('[รหัสผ่าน] บันทึกรหัสใหม่')
   const { error } = await withTimeout(
-    supabase.auth.updateUser({ password: newPassword }), 12000, 'ขั้นบันทึกรหัสใหม่')
-  if (error) {
-    if (/reauthentic/i.test(error.message))
-      throw new Error('Supabase เปิดโหมด Secure password change อยู่ ให้ปิดที่ Authentication > Providers > Email หรือใช้ปุ่ม “ลืมรหัสผ่าน” แทน')
-    throw new Error('เปลี่ยนรหัสผ่านไม่สำเร็จ: ' + error.message)
-  }
-  console.info('[รหัสผ่าน] ขั้น 3/3 บันทึกสถานะ')
+    supabase.rpc('change_my_password', { p_current: currentPassword, p_new: newPassword }),
+    12000, 'การบันทึกรหัสผ่าน')
 
-  // รหัสผ่านเปลี่ยนสำเร็จแล้วตรงนี้ ที่เหลือคือลบธง must_change_password
-  // ถ้าขั้นนี้พลาด ห้าม throw ทิ้ง เพราะผู้ใช้จะติดหน้าเดิมด้วยรหัสใหม่ที่ยังไม่รู้ตัว
-  try {
-    const { error: rpcErr } = await withTimeout(
-      supabase.rpc('mark_password_changed'), 15000, 'การบันทึกสถานะ')
-    if (rpcErr) throw rpcErr
-  } catch (e) {
-    return { warning: 'รหัสผ่านใหม่ใช้ได้แล้ว แต่ระบบยังบันทึกสถานะไม่สำเร็จ (' + (e.message || e) +
-      ') ถ้ายังเจอหน้าให้เปลี่ยนรหัสอีก แจ้งฝ่ายจัดซื้อให้ล้างสถานะให้' }
+  if (error) {
+    const msg = error.message || String(error)
+    if (/change_my_password/.test(msg) && /(does not exist|not find)/i.test(msg))
+      throw new Error('ยังไม่ได้ติดตั้งฟังก์ชันเปลี่ยนรหัสผ่าน — ให้ผู้ดูแลรัน 09_self_password.sql ใน SQL Editor ก่อน')
+    throw new Error(msg.replace(/^.*?ERROR:\s*/, ''))
   }
   return {}
 }

@@ -522,6 +522,9 @@ git push">คัดลอก</button></div>
       <tr><td>กดบันทึกรหัสผ่านแล้วค้าง / ขึ้นว่าไม่ตอบกลับใน 12 วินาที</td>
         <td>auth lock ของ supabase ถูกจับค้าง — เกิดจาก 2 อย่าง: (1) เรียก auth ซ้อนใน onAuthStateChange (2) ตอน <code>npm run dev</code> ทุกครั้งที่แก้ไฟล์ HMR สร้าง GoTrueClient ตัวใหม่ ทำให้มีหลายตัวแย่ง lock กัน</td>
         <td>อัปเดตโค้ดชุดล่าสุด (client เป็น singleton บน globalThis แล้ว + ใช้ client แยกตอนตรวจรหัสเดิม) แล้ว <b>กด ⌘⇧R รีเฟรชแบบล้างแคช</b> หรือหยุด <code>npm run dev</code> แล้วสั่งใหม่ — HMR อย่างเดียวไม่พอ เพราะ client ตัวเก่ายังอยู่ในหน้าเดิม</td></tr>
+      <tr><td>เปลี่ยนรหัสแล้วขึ้น “ขั้นบันทึกรหัสใหม่ ไม่ตอบกลับใน 12 วินาที”</td>
+        <td>คำสั่ง <code>auth.updateUser</code> ของ Supabase ค้าง — เจอในโปรเจกต์ที่ยังไม่ได้ต่อ SMTP (GoTrue รอส่งอีเมลหรือตรวจรหัสรั่วจากบริการภายนอกจนหมดเวลา)</td>
+        <td>รัน <code>09_self_password.sql</code> ครั้งเดียว แล้วใช้โค้ดชุดล่าสุด — การเปลี่ยนรหัสจะทำผ่านฟังก์ชันในฐานข้อมูล ไม่ผ่าน Auth API อีก</td></tr>
       <tr><td>ขึ้นข้อความว่า Secure password change</td><td>Supabase เปิดโหมดต้องยืนยันตัวตนซ้ำก่อนเปลี่ยนรหัส</td><td>Authentication → Providers → Email → ปิด Secure password change หรือให้ผู้ใช้ใช้ปุ่ม “ลืมรหัสผ่าน” แทน</td></tr>
       <tr><td>อยากรู้ว่าค้างที่ขั้นไหน</td><td>—</td><td>เปิด DevTools → Console จะเห็น <code>[รหัสผ่าน] ขั้น 1/3 ตรวจรหัสเดิม</code> ไปจนถึง 3/3 บอกตำแหน่งที่ค้างชัดเจน</td></tr>
       <tr><td>เปลี่ยนรหัสสำเร็จแต่ยังเจอหน้าบังคับเปลี่ยนซ้ำ</td><td>ธง <code>must_change_password</code> ยังไม่ถูกล้าง</td><td>SQL Editor: <code>update profiles set must_change_password = false where id = (select id from auth.users where email = 'อีเมลของเขา');</code></td></tr>
