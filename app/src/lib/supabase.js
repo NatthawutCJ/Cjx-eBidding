@@ -3,18 +3,21 @@ import { createClient } from '@supabase/supabase-js'
 const url = import.meta.env.VITE_SUPABASE_URL
 const key = import.meta.env.VITE_SUPABASE_ANON_KEY
 
-if (!url || !key) {
-  throw new Error('ยังไม่ได้ตั้งค่า VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY — คัดลอก .env.example เป็น .env แล้วใส่ค่าจาก Supabase')
-}
+// ไม่ throw ตรงนี้ เพราะการ throw ตอนโหลดโมดูลทำให้เว็บขึ้นหน้าขาวโดยไม่บอกสาเหตุ
+// ให้ main.jsx อ่านค่านี้ไปแสดงข้อความบนหน้าจอแทน
+export const configError = (!url || !key)
+  ? `ยังไม่ได้ตั้งค่า ${[!url && 'VITE_SUPABASE_URL', !key && 'VITE_SUPABASE_ANON_KEY'].filter(Boolean).join(' และ ')}`
+  : null
 
 // เก็บ client ไว้บน globalThis
 // เหตุผล: ตอน npm run dev ทุกครั้งที่แก้ไฟล์ Vite จะโหลดโมดูลใหม่ (HMR)
 // ถ้าสร้าง client ใหม่ทุกครั้ง จะมี GoTrueClient หลายตัวในหน้าเดียว แย่ง lock ของ auth กันเอง
 // ผลคือคำสั่งอย่าง updateUser ค้างไม่จบ (อาการ: กดเปลี่ยนรหัสผ่านแล้วรอจนหมดเวลา)
 const g = globalThis
-export const supabase = g.__cjxSupabase ?? (g.__cjxSupabase = createClient(url, key, {
-  auth: { persistSession: true, autoRefreshToken: true, storageKey: 'cjx-bidding-auth' },
-}))
+export const supabase = configError ? null
+  : (g.__cjxSupabase ?? (g.__cjxSupabase = createClient(url, key, {
+      auth: { persistSession: true, autoRefreshToken: true, storageKey: 'cjx-bidding-auth' },
+    })))
 
 // client แยกสำหรับ "ตรวจรหัสผ่านเดิม" เท่านั้น
 //   - persistSession: false  → ไม่แตะ session ที่ล็อกอินอยู่

@@ -509,7 +509,13 @@ git push">คัดลอก</button></div>
       <tr><td>ราคาไม่ขึ้นเรียลไทม์</td><td>ตาราง bids ยังไม่เข้า publication</td><td>รันบรรทัดท้ายของ <code>01_schema.sql</code> ที่เป็น <code>alter publication</code> ซ้ำอีกครั้ง</td></tr>
       <tr><td><code>ENOENT ... open '/opt/buildhome/repo/package.json'</code></td><td>Root directory ยังเป็น <code>/</code></td><td>Settings → Build → Root directory ใส่ <code>app</code> → Retry build</td></tr>
       <tr><td>Deploy ผ่านแต่เปิดเว็บขึ้น 404 หรือหน้าเปล่า (แบบ Workers)</td><td>ไม่มี <code>wrangler.toml</code> บอกว่าให้เสิร์ฟ <code>dist</code></td><td>ใช้ไฟล์ <code>app/wrangler.toml</code> ที่ให้มา และแก้ <code>name</code> ให้ตรงกับชื่อ Worker</td></tr>
-      <tr><td>เว็บขึ้นหน้าขาว</td><td>ลืมใส่ env vars ใน Cloudflare</td><td>ใส่ 2 ตัวแล้วกด Retry deployment (ต้อง build ใหม่ค่าจึงมีผล)</td></tr>
+      <tr><td>เว็บขึ้นหน้าขาว</td><td>ลืมใส่ env vars ใน Cloudflare หรือใส่แล้วแต่ยังไม่ build ใหม่</td>
+        <td>Settings → Environment variables (Production) ใส่ <code>VITE_SUPABASE_URL</code> + <code>VITE_SUPABASE_ANON_KEY</code>
+        แล้วกด <b>Retry deployment</b> — ค่าถูกฝังตอน build ใส่แล้วไม่ build ใหม่จะไม่มีผล<br>
+        โค้ดชุดล่าสุดจะขึ้นข้อความบอกสาเหตุบนหน้าจอแทนหน้าขาวแล้ว</td></tr>
+      <tr><td>Pages ฟ้อง <code>Output directory "app/.vitepress/djst" not found</code></td>
+        <td>เลือก Framework preset เป็น VitePress (คนละตัวกับที่เราใช้)</td>
+        <td>Settings → Build configurations → preset = None · Build output directory = <code>dist</code> เฉยๆ</td></tr>
       <tr><td><code>syntax error at or near "suppliers"</code> ตอนรัน SQL</td><td>วางไม่ครบไฟล์ หรือมีข้อความถูกเลือกค้างในหน้าต่าง (Supabase รันเฉพาะส่วนที่เลือก)</td><td>ใช้ <code>… | pbcopy</code> คัดลอกทั้งไฟล์ คลิกที่ว่างหนึ่งครั้ง แล้วกด Run · ใช้ไฟล์ <code>00_all_in_one.sql</code> จะรันครั้งเดียวจบ</td></tr>
       <tr><td><code>violates foreign key constraint "profiles_id_fkey"</code></td><td>อีเมล/UUID ในไฟล์ seed ไม่ตรงกับผู้ใช้ใน Authentication</td><td>ไฟล์ seed เวอร์ชันใหม่ค้นหาจากอีเมลและบอกชัดว่าอีเมลไหนหาไม่เจอ — แก้ให้ตรงแล้วรันใหม่</td></tr>
       <tr><td>ผู้ขายบอกว่าติดหน้าให้เปลี่ยนรหัส ผ่านไปไม่ได้</td><td>รหัสเดิมที่กรอกไม่ตรงกับที่ตั้งไว้</td><td>ตั้งรหัสใหม่ให้ที่ Authentication → คลิกผู้ใช้ → Reset password แล้วแจ้งเขาอีกครั้ง</td></tr>
