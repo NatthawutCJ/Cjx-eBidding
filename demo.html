@@ -336,10 +336,10 @@ const ICON = {
 
 /* ---------------- seed data ---------------- */
 const users = [
-  {id:'buy1', role:'buyer',    name:'นฤมล กิตติวัฒน์',  org:'ฝ่ายจัดซื้อกลาง',            pos:'Senior Buyer'},
-  {id:'sup1', role:'supplier', name:'ธนกร วงศ์อนันต์',  org:'บจก. สยามฟู้ดส์ ซัพพลาย',   pos:'ผู้จัดการฝ่ายขาย', code:'V-1042'},
-  {id:'sup2', role:'supplier', name:'ปิยะ สุขเจริญ',    org:'บจก. เอเชีย แพ็คเกจจิ้ง',    pos:'Key Account',      code:'V-2318'},
-  {id:'sup3', role:'supplier', name:'วรินทร ตั้งมั่น',  org:'หจก. ทรัพย์รุ่งเรือง เทรดดิ้ง', pos:'เจ้าของกิจการ',    code:'V-3077', mustChange:true},
+  {id:'buy1', role:'buyer',    name:'Natthawut', org:'ฝ่ายจัดซื้อกลาง',  pos:'ฝ่ายจัดซื้อกลาง'},
+  {id:'sup1', role:'supplier', name:'Chatnapa',  org:'Buum Company',    pos:'ผู้ติดต่อ', code:'V-1001'},
+  {id:'sup2', role:'supplier', name:'Passara',   org:'Amm Company',     pos:'ผู้ติดต่อ', code:'V-1002'},
+  {id:'sup3', role:'supplier', name:'Saksit',    org:'Sanddy Company',  pos:'ผู้ติดต่อ', code:'V-1003', mustChange:true},
 ];
 const U = id => users.find(u=>u.id===id) || {name:'—',org:'—'};
 
@@ -392,12 +392,12 @@ const state = {
      items:[{id:'i1', name:'เที่ยววิ่งรถห้องเย็น 6 ล้อ', spec:'0–4°C พร้อมบันทึกอุณหภูมิ', qty:1200, unit:'เที่ยว'}]},
   ],
   bids: [
-    {id:'b1', tenderId:'t1', supplierId:'sup2', lines:{i1:41.5,i2:39.8,i3:38.2}, docs:[{n:'quotation-asia-pkg.pdf',s:284000},{n:'company-cert.pdf',s:1180000},{n:'por-por-20.jpg',s:642000}], note:'ยืนราคา 30 วัน ส่งภายใน 14 วันหลังรับ PO', at:T0-26*MIN, ver:2},
-    {id:'b2', tenderId:'t1', supplierId:'sup3', lines:{i1:42.9,i2:40.5,i3:39.0}, docs:[{n:'ใบเสนอราคา-ทรัพย์รุ่งเรือง.pdf',s:311000},{n:'หนังสือรับรอง.pdf',s:905000}], note:'ราคานี้รวมค่าขนส่งถึง DC บางบัวทอง', at:T0-14*MIN, ver:1},
+    {id:'b1', tenderId:'t1', supplierId:'sup2', lines:{i1:41.5,i2:39.8,i3:38.2}, docs:[{n:'quotation-buum.pdf',s:284000},{n:'company-cert.pdf',s:1180000},{n:'por-por-20.jpg',s:642000}], note:'ยืนราคา 30 วัน ส่งภายใน 14 วันหลังรับ PO', at:T0-26*MIN, ver:2},
+    {id:'b2', tenderId:'t1', supplierId:'sup3', lines:{i1:42.9,i2:40.5,i3:39.0}, docs:[{n:'ใบเสนอราคา-sanddy.pdf',s:311000},{n:'หนังสือรับรอง.pdf',s:905000}], note:'ราคานี้รวมค่าขนส่งถึง DC บางบัวทอง', at:T0-14*MIN, ver:1},
     {id:'b3', tenderId:'t2', supplierId:'sup3', lines:{i1:132.0,i2:98.5}, docs:[{n:'quote-q4-rice.pdf',s:402000},{n:'gmp-haccp.pdf',s:2210000},{n:'lab-report-aug.pdf',s:1540000}], note:'ราคา ณ วันยื่น ปรับตามราคากลางข้าวเปลือกได้หากเกิน 30 วัน', at:T0-6*HOUR, ver:1},
     {id:'b4', tenderId:'t3', supplierId:'sup1', lines:{i1:4150,i2:118}, docs:[{n:'quote-shelf.pdf',s:355000},{n:'cert.pdf',s:880000}], note:'ติดตั้งฟรี 12 สาขา', at:T0-2*DAY, ver:1},
-    {id:'b5', tenderId:'t3', supplierId:'sup2', lines:{i1:4380,i2:105}, docs:[{n:'quote-shelf-asia.pdf',s:298000},{n:'cert.pdf',s:1180000}], note:'ส่งของ 21 วัน', at:T0-30*HOUR, ver:1},
-    {id:'b6', tenderId:'t3', supplierId:'sup3', lines:{i1:4090,i2:126}, docs:[{n:'quote-shelf-trs.pdf',s:265000}], note:'ขอ 50% เงินมัดจำ', at:T0-5*HOUR, ver:1},
+    {id:'b5', tenderId:'t3', supplierId:'sup2', lines:{i1:4380,i2:105}, docs:[{n:'quote-shelf-amm.pdf',s:298000},{n:'cert.pdf',s:1180000}], note:'ส่งของ 21 วัน', at:T0-30*HOUR, ver:1},
+    {id:'b6', tenderId:'t3', supplierId:'sup3', lines:{i1:4090,i2:126}, docs:[{n:'quote-shelf-sanddy.pdf',s:265000}], note:'ขอ 50% เงินมัดจำ', at:T0-5*HOUR, ver:1},
     {id:'b7', tenderId:'t4', supplierId:'sup2', lines:{i1:2180}, docs:[{n:'quote-cold-chain.pdf',s:410000}], note:'', at:T0-6*DAY, ver:3},
     {id:'b8', tenderId:'t4', supplierId:'sup1', lines:{i1:2290}, docs:[{n:'quote-transport.pdf',s:388000}], note:'', at:T0-6*DAY, ver:2},
   ],

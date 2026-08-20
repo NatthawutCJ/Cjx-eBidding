@@ -30,9 +30,10 @@ export default function ChangePassword({ mode = 'sheet', profile, onDone, onClos
     if (next !== confirm) return toast('รหัสผ่านไม่ตรงกัน', 'กรอกรหัสใหม่ให้ตรงกันทั้งสองช่อง', 'crit')
     setBusy(true)
     try {
-      if (recovery) await setNewPassword(next)
-      else await changePassword(profile.email, current, next)
-      toast('เปลี่ยนรหัสผ่านแล้ว', 'ครั้งต่อไปให้เข้าสู่ระบบด้วยรหัสใหม่', 'good')
+      const res = recovery ? await setNewPassword(next) : await changePassword(profile.email, current, next)
+      if (res?.warning) toast('เปลี่ยนรหัสผ่านแล้ว แต่มีข้อควรทราบ', res.warning, 'warn')
+      else toast('เปลี่ยนรหัสผ่านแล้ว', 'ครั้งต่อไปให้เข้าสู่ระบบด้วยรหัสใหม่', 'good')
+      setCurrent(''); setNext(''); setConfirm('')
       onDone?.()
     } catch (err) {
       toast('เปลี่ยนรหัสผ่านไม่สำเร็จ', err.message, 'crit')

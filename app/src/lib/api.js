@@ -1,4 +1,4 @@
-import { supabase } from './supabase'
+import { supabase, verifyClient } from './supabase'
 
 // ============================ auth / profile ============================
 export async function signIn(email, password) {
@@ -9,27 +9,61 @@ export async function signIn(email, password) {
 export const signOut = () => supabase.auth.signOut()
 
 // ---------- รหัสผ่าน ----------
-// ยืนยันรหัสเดิมก่อนเปลี่ยน (กันคนที่แอบใช้เครื่องที่เปิดค้างไว้ และรองรับ Secure password change ของ Supabase)
+// กันค้าง: ทุกคำสั่งมีเวลาจำกัด ถ้าเน็ตหลุดหรือ Supabase ไม่ตอบ จะขึ้น error ไม่ใช่หมุนค้าง
+const withTimeout = (promise, ms, label) => Promise.race([
+  promise,
+  new Promise((_, reject) => setTimeout(() => reject(new Error(
+    `${label} ไม่ตอบกลับใน ${ms/1000} วินาที — ลองกดรีเฟรชหน้าเว็บแบบล้างแคช (⌘⇧R) แล้วทำอีกครั้ง ` +
+    `ถ้ายังไม่หายให้หยุด npm run dev แล้วสั่งใหม่`)), ms)),
+])
+
+// ยืนยันรหัสเดิมก่อนเปลี่ยน (กันคนที่แอบใช้เครื่องที่เปิดค้างไว้)
 export async function changePassword(email, currentPassword, newPassword) {
   if (newPassword.length < 8) throw new Error('รหัสผ่านใหม่ต้องยาวอย่างน้อย 8 ตัวอักษร')
   if (newPassword === currentPassword) throw new Error('รหัสผ่านใหม่ต้องไม่ซ้ำกับรหัสเดิม')
 
-  const { error: reauth } = await supabase.auth.signInWithPassword({ email, password: currentPassword })
-  if (reauth) throw new Error('รหัสผ่านเดิมไม่ถูกต้อง')
+  // ขั้น 1 ตรวจรหัสเดิมด้วย client แยก — ไม่แตะ session หลัก ไม่แย่ง lock จึงไม่ค้าง
+  console.info('[รหัสผ่าน] ขั้น 1/3 ตรวจรหัสเดิม')
+  const { error: reauth } = await withTimeout(
+    verifyClient().auth.signInWithPassword({ email, password: currentPassword }),
+    12000, 'ขั้นตรวจรหัสเดิม')
+  if (reauth) {
+    console.warn('[รหัสผ่าน] ตรวจรหัสเดิมไม่ผ่าน:', reauth.message)
+    throw new Error('รหัสผ่านเดิมไม่ถูกต้อง')
+  }
 
-  const { error } = await supabase.auth.updateUser({ password: newPassword })
-  if (error) throw new Error('เปลี่ยนรหัสผ่านไม่สำเร็จ: ' + error.message)
+  // ขั้น 2 เปลี่ยนรหัสจริงบน session ที่ล็อกอินอยู่
+  console.info('[รหัสผ่าน] ขั้น 2/3 บันทึกรหัสใหม่')
+  const { error } = await withTimeout(
+    supabase.auth.updateUser({ password: newPassword }), 12000, 'ขั้นบันทึกรหัสใหม่')
+  if (error) {
+    if (/reauthentic/i.test(error.message))
+      throw new Error('Supabase เปิดโหมด Secure password change อยู่ ให้ปิดที่ Authentication > Providers > Email หรือใช้ปุ่ม “ลืมรหัสผ่าน” แทน')
+    throw new Error('เปลี่ยนรหัสผ่านไม่สำเร็จ: ' + error.message)
+  }
+  console.info('[รหัสผ่าน] ขั้น 3/3 บันทึกสถานะ')
 
-  const { error: rpcErr } = await supabase.rpc('mark_password_changed')
-  if (rpcErr) throw new Error('เปลี่ยนรหัสผ่านแล้ว แต่บันทึกสถานะไม่สำเร็จ: ' + rpcErr.message)
+  // รหัสผ่านเปลี่ยนสำเร็จแล้วตรงนี้ ที่เหลือคือลบธง must_change_password
+  // ถ้าขั้นนี้พลาด ห้าม throw ทิ้ง เพราะผู้ใช้จะติดหน้าเดิมด้วยรหัสใหม่ที่ยังไม่รู้ตัว
+  try {
+    const { error: rpcErr } = await withTimeout(
+      supabase.rpc('mark_password_changed'), 15000, 'การบันทึกสถานะ')
+    if (rpcErr) throw rpcErr
+  } catch (e) {
+    return { warning: 'รหัสผ่านใหม่ใช้ได้แล้ว แต่ระบบยังบันทึกสถานะไม่สำเร็จ (' + (e.message || e) +
+      ') ถ้ายังเจอหน้าให้เปลี่ยนรหัสอีก แจ้งฝ่ายจัดซื้อให้ล้างสถานะให้' }
+  }
+  return {}
 }
 
 // ตั้งรหัสใหม่จากลิงก์ในอีเมล (ไม่ต้องรู้รหัสเดิม)
 export async function setNewPassword(newPassword) {
   if (newPassword.length < 8) throw new Error('รหัสผ่านต้องยาวอย่างน้อย 8 ตัวอักษร')
-  const { error } = await supabase.auth.updateUser({ password: newPassword })
+  const { error } = await withTimeout(
+    supabase.auth.updateUser({ password: newPassword }), 15000, 'การตั้งรหัสผ่าน')
   if (error) throw new Error('ตั้งรหัสผ่านไม่สำเร็จ: ' + error.message)
-  await supabase.rpc('mark_password_changed')
+  try { await withTimeout(supabase.rpc('mark_password_changed'), 15000, 'การบันทึกสถานะ') } catch (_) {}
+  return {}
 }
 
 export async function requestPasswordReset(email) {
@@ -39,8 +73,9 @@ export async function requestPasswordReset(email) {
   if (error) throw new Error(error.message)
 }
 
-export async function getProfile() {
-  const { data: { user } } = await supabase.auth.getUser()
+// รับ user มาจาก onAuthStateChange ได้ เพื่อไม่ต้องเรียก getUser() (ซึ่งจะค้างถ้าถูกเรียกใน callback ของ auth)
+export async function getProfile(passedUser) {
+  const user = passedUser ?? (await supabase.auth.getUser()).data.user
   if (!user) return null
   const { data, error } = await supabase
     .from('profiles')
@@ -173,6 +208,17 @@ export const declineInvite = id     => rpc('decline_invite', { p_tender: id })
 export const attachBidFiles = (tenderId, files) =>
   rpc('attach_bid_files', { p_tender: tenderId, p_files: files })
 export const createTender = payload => rpc('create_tender', { p: payload })
+
+// ============================ จัดการผู้ใช้ (ฝ่ายจัดซื้อ) ============================
+export async function adminListUsers() {
+  const { data, error } = await supabase.rpc('admin_list_users')
+  if (error) throw new Error(error.message)
+  return data || []
+}
+export const adminSetSupplierPassword = (targetId, password) =>
+  rpc('admin_set_supplier_password', { p_target: targetId, p_password: password })
+export const adminSetMustChange = (targetId, value) =>
+  rpc('admin_set_must_change', { p_target: targetId, p_value: value })
 
 // ============================ realtime ============================
 export function subscribeTender(id, onChange) {

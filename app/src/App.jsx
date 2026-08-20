@@ -9,9 +9,11 @@ import TenderDetail from './components/TenderDetail.jsx'
 import BuyerDashboard from './components/BuyerDashboard.jsx'
 import CreateTender from './components/CreateTender.jsx'
 import ChangePassword from './components/ChangePassword.jsx'
+import AdminUsers from './components/AdminUsers.jsx'
 
 const NAV = {
-  buyer: [['dash', 'ภาพรวม', ICON.chart], ['list', 'ประกาศประมูล', ICON.list], ['feed', 'ความเคลื่อนไหว', ICON.bolt]],
+  buyer: [['dash', 'ภาพรวม', ICON.chart], ['list', 'ประกาศประมูล', ICON.list],
+          ['users', 'ผู้ใช้และผู้ขาย', ICON.tag], ['feed', 'ความเคลื่อนไหว', ICON.bolt]],
   supplier: [['list', 'ประกาศประมูล', ICON.list], ['mybids', 'ราคาของฉัน', ICON.tag], ['feed', 'ความเคลื่อนไหว', ICON.bolt]],
 }
 
@@ -19,18 +21,24 @@ export default function App() {
   const [profile, setProfile] = useState(undefined)   // undefined = กำลังตรวจ session
   const [recovery, setRecovery] = useState(false)     // มาจากลิงก์ตั้งรหัสใหม่ในอีเมล
 
-  const loadProfile = useCallback(async () => {
-    try { setProfile(await getProfile()) }
+  const loadProfile = useCallback(async (user) => {
+    try { setProfile(await getProfile(user)) }
     catch (e) { toast('โหลดข้อมูลผู้ใช้ไม่ได้', e.message, 'crit'); setProfile(null) }
   }, [])
 
   useEffect(() => {
+    let alive = true
     loadProfile()
-    const { data } = supabase.auth.onAuthStateChange((event) => {
-      if (event === 'PASSWORD_RECOVERY') setRecovery(true)   // ผู้ใช้กดลิงก์ในอีเมลลืมรหัสผ่าน
-      loadProfile()
+
+    // สำคัญ: ห้ามเรียกฟังก์ชันของ supabase (เช่น getUser) ตรงๆ ในคอลแบ็กนี้
+    // supabase-js ถือ lock ของ auth อยู่ระหว่างประมวลผล event ถ้าเรียกซ้อนเข้าไปจะค้างทั้งคำสั่ง
+    // (อาการ: กดเปลี่ยนรหัสผ่านแล้วปุ่มค้างที่ "กำลังบันทึก…") จึงต้องเลื่อนออกไปด้วย setTimeout 0
+    const { data } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'PASSWORD_RECOVERY') setRecovery(true)
+      if (event === 'SIGNED_OUT') { setProfile(null); return }
+      setTimeout(() => { if (alive) loadProfile(session?.user ?? undefined) }, 0)
     })
-    return () => data.subscription.unsubscribe()
+    return () => { alive = false; data.subscription.unsubscribe() }
   }, [loadProfile])
 
   if (profile === undefined) return <><div className="login"><p className="dim">กำลังเข้าสู่ระบบ…</p></div><Toasts /></>
@@ -85,6 +93,8 @@ function Shell({ profile }) {
   } else if (view === 'dash') {
     body = <BuyerDashboard tenders={tenders} events={events} profile={profile}
              onOpen={open} onCreate={() => setSheet('create')} />
+  } else if (view === 'users') {
+    body = <AdminUsers />
   } else if (view === 'mybids') {
     body = <MyBids tenders={tenders} profile={profile} onOpen={open} />
   } else if (view === 'feed') {

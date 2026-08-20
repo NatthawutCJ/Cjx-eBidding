@@ -90,9 +90,9 @@ code{font-family:var(--font-m);font-size:.88em;background:var(--surface-2);paddi
 .note b{color:var(--ink)}
 
 /* ---- fields ---- */
-.kv{display:grid;grid-template-columns:auto 1fr;gap:.35rem .8rem;font-size:.9rem;background:var(--surface-2);
+.kv{display:grid;grid-template-columns:minmax(0,auto) minmax(0,1fr);gap:.35rem .8rem;font-size:.9rem;background:var(--surface-2);
   border:1px solid var(--line);border-radius:8px;padding:.7rem .8rem}
-.kv dt{color:var(--ink-3)}
+.kv dt{color:var(--ink-3);overflow-wrap:anywhere}
 .kv dd{margin:0;font-family:var(--font-m);font-size:.85rem;overflow-wrap:anywhere}
 @media (max-width:560px){.kv{grid-template-columns:1fr;gap:.1rem}.kv dd{margin-bottom:.45rem}}
 
@@ -181,16 +181,21 @@ npm install">คัดลอก</button></div>
   </div></div>
 
   <div class="step"><span class="n">4</span><div class="body">
-    <h3>รันไฟล์ SQL 4 ไฟล์ ตามลำดับ</h3>
-    <p class="muted">ในหน้า Supabase เลือกเมนู <b>SQL Editor</b> → New query → เปิดไฟล์จากโฟลเดอร์
-      <code>app/supabase/</code> คัดลอกทั้งไฟล์ไปวาง แล้วกด <b>Run</b> ทำทีละไฟล์ตามลำดับนี้</p>
+    <h3>ติดตั้งฐานข้อมูล — วางครั้งเดียวจบ</h3>
+    <p class="muted">ใช้ไฟล์รวม <code>00_all_in_one.sql</code> (ตาราง + RLS + ฟังก์ชัน + ที่เก็บไฟล์ อยู่ในไฟล์เดียว)
+      วิธีคัดลอกที่ไม่มีตกหล่น ให้รันคำสั่งนี้ใน Terminal — ไฟล์ทั้งไฟล์จะเข้าคลิปบอร์ดทันที</p>
+    <div class="code"><pre>cat ~/Desktop/supplier-bidding/app/supabase/00_all_in_one.sql | pbcopy</pre><button class="copy" data-copy="cat ~/Desktop/supplier-bidding/app/supabase/00_all_in_one.sql | pbcopy">คัดลอก</button></div>
     <ol>
-      <li><code>01_schema.sql</code> — สร้างตารางทั้งหมด</li>
-      <li><code>02_rls.sql</code> — กติกาการมองเห็นราคา</li>
-      <li><code>03_functions.sql</code> — ฟังก์ชันยื่นราคา เปิดซอง ประกาศผล ค้อน</li>
-      <li><code>04_storage.sql</code> — ที่เก็บไฟล์แนบ</li>
+      <li>Supabase → <b>SQL Editor → New query</b> → กด ⌘V</li>
+      <li><b>คลิกที่พื้นที่ว่างในหน้าต่างหนึ่งครั้ง</b> เพื่อไม่ให้มีข้อความถูกเลือกค้างไว้</li>
+      <li>กด <b>Run</b> → ต้องขึ้น <code>Success. No rows returned</code></li>
     </ol>
-    <div class="note"><b>ต้องขึ้น Success ทุกไฟล์</b> ถ้าไฟล์ไหน error ให้หยุดก่อน อย่ารันไฟล์ถัดไป เพราะไฟล์หลังอ้างถึงของในไฟล์หน้า</div>
+    <div class="note crit"><b>สาเหตุอันดับหนึ่งของ error <code>syntax error at or near "suppliers"</code></b> คือ
+      Supabase จะรัน<b>เฉพาะข้อความที่ถูกเลือก</b> ถ้ามี selection ค้างอยู่ในหน้าต่าง
+      หรือคัดลอกมาไม่ครบไฟล์ — ใช้คำสั่ง <code>pbcopy</code> ด้านบนแล้วคลิกที่ว่างก่อนกด Run จะไม่เจอปัญหานี้</div>
+    <div class="note"><b>ไฟล์นี้รันซ้ำได้</b> เพราะมันลบโครงเดิมทิ้งก่อนสร้างใหม่ ถ้าติดตั้งพลาดครึ่งทางให้รันใหม่ทั้งไฟล์ได้เลย
+      แต่<b>ห้ามรันหลังเริ่มใช้งานจริง</b> เพราะข้อมูลประมูลจะหายทั้งหมด
+      (ถ้าต้องการรันแยกทีละส่วน ไฟล์ <code>01</code>–<code>04</code> ยังอยู่ในโฟลเดอร์เดิม)</div>
   </div></div>
 
   <div class="step"><span class="n">5</span><div class="body">
@@ -199,8 +204,14 @@ npm install">คัดลอก</button></div>
     <ol>
       <li>สร้าง 1 บัญชีสำหรับฝ่ายจัดซื้อ และ 1 บัญชีต่อ 1 ซัพพลายเออร์ (เริ่มด้วย 3 ราย)</li>
       <li>กรอกอีเมล + รหัสผ่าน และ <b>ติ๊ก Auto Confirm User</b> ทุกครั้ง</li>
-      <li>คลิกที่ผู้ใช้แต่ละคน คัดลอก <b>UID</b> (เลขยาวๆ) เก็บไว้ทั้ง 4 ค่า</li>
+      <li>จำอีเมลที่ใช้ให้ครบ — ขั้นถัดไปอ้างอิงจากอีเมล <b>ไม่ต้องคัดลอก UID</b></li>
     </ol>
+    <dl class="kv">
+      <dt>natthawut.yut@cjmart.co.th</dt><dd>ฝ่ายจัดซื้อกลาง</dd>
+      <dt>chatnapa.ton@cjmart.co.th</dt><dd>Buum Company (V-1001)</dd>
+      <dt>passara.rat@cjmart.co.th</dt><dd>Amm Company (V-1002)</dd>
+      <dt>saksit.sai@cjmart.co.th</dt><dd>Sanddy Company (V-1003)</dd>
+    </dl>
     <div class="note crit"><b>ถ้าไม่ติ๊ก Auto Confirm</b> จะเข้าสู่ระบบไม่ได้และขึ้นว่าอีเมลหรือรหัสผ่านไม่ถูกต้อง ซึ่งเป็นปัญหาที่เจอบ่อยที่สุด</div>
     <div class="note warn"><b>รหัสที่คุณตั้งให้ ผู้ขายต้องเปลี่ยนเองก่อนใช้งาน</b> — ระบบบังคับให้เปลี่ยนตอนเข้าครั้งแรก
       และฝั่งฐานข้อมูลจะปฏิเสธการยื่นราคาจนกว่าจะเปลี่ยน เพราะถ้าไม่บังคับ ฝ่ายจัดซื้อที่รู้รหัสจะเข้าไปยื่นราคาแทนผู้ขายได้
@@ -209,12 +220,12 @@ npm install">คัดลอก</button></div>
 
   <div class="step"><span class="n">6</span><div class="body">
     <h3>ใส่ข้อมูลตั้งต้น</h3>
-    <ol>
-      <li>เปิดไฟล์ <code>app/supabase/05_seed.sql</code> ด้วย TextEdit</li>
-      <li>แก้ UUID 4 บรรทัดบนสุด ให้ตรงกับ UID ที่คัดลอกไว้ในขั้นที่ 5</li>
-      <li>คัดลอกทั้งไฟล์ไปวางใน SQL Editor แล้วกด Run</li>
-    </ol>
-    <p class="dim">จะได้บริษัทผู้ขาย 3 ราย โปรไฟล์ผู้ใช้ 4 คน และประกาศตัวอย่าง 2 งาน (เปิดราคา 1 / ปิดราคา 1)</p>
+    <p class="muted">ไฟล์ seed ค้นหาผู้ใช้จากอีเมล และใส่อีเมลทั้ง 4 ของคุณไว้ให้แล้ว คัดลอกด้วยคำสั่งนี้แล้วไปวาง แล้วกด Run</p>
+    <div class="code"><pre>cat ~/Desktop/supplier-bidding/app/supabase/05_seed.sql | pbcopy</pre><button class="copy" data-copy="cat ~/Desktop/supplier-bidding/app/supabase/05_seed.sql | pbcopy">คัดลอก</button></div>
+    <p class="dim">ได้บริษัทผู้ขาย 3 ราย (Buum / Amm / Sanddy) โปรไฟล์ผู้ใช้ 4 คน และประกาศตัวอย่าง 2 งาน
+      ท้ายไฟล์มีคำสั่ง select แสดงผลให้ตรวจว่าผูกถูกทุกคน</p>
+    <div class="note warn"><b>ถ้าขึ้น error เรื่อง profiles_id_fkey</b> หมายถึงอีเมลในไฟล์ไม่ตรงกับผู้ใช้ที่สร้างไว้
+      ตอนนี้ไฟล์จะขึ้นข้อความไทยบอกชัดว่าอีเมลไหนหาไม่เจอ — แก้อีเมล 4 บรรทัดบนสุดของไฟล์ให้ตรง แล้วรันใหม่</div>
   </div></div>
 
   <div class="step"><span class="n">7</span><div class="body">
@@ -327,10 +338,81 @@ git push -u origin main">คัดลอก</button></div>
   </div></div>
 </section>
 
+<!-- ============ อีเมลและรหัสผ่าน ============ -->
+<section class="phase">
+  <div class="phasehead"><span class="tag">รหัสผ่าน</span><h2>ตั้งรหัสใหม่ให้ผู้ใช้ เมื่ออีเมลใช้ไม่ได้</h2></div>
+
+  <div class="step" style="grid-template-columns:1fr"><div class="body">
+    <div class="note warn"><b>อีเมลในตัวของ Supabase free tier ใช้ทำงานจริงไม่ได้</b> — ส่งได้ไม่กี่ฉบับต่อชั่วโมง
+      และมักไม่ตอบกลับ (ปุ่มลืมรหัสผ่านจะขึ้น <code>HTTP 504</code>) ช่วงติดตั้งจึงควรตั้งรหัสให้ตรงๆ จาก SQL
+      แล้วค่อยต่อ SMTP ภายนอกทีหลังเมื่อต้องการให้ผู้ขายรีเซ็ตรหัสเองได้</div>
+
+    <h3>วิธีที่ 1 — กดจากในเว็บ (แนะนำ ใช้ประจำวัน)</h3>
+    <p class="muted">ติดตั้งครั้งเดียวด้วยไฟล์นี้ แล้วหลังจากนั้นฝ่ายจัดซื้อกดตั้งรหัสให้ผู้ขายได้เองจากเมนู
+      <b>ผู้ใช้และผู้ขาย</b> ไม่ต้องแตะ SQL และไม่ต้องพึ่งอีเมลอีก</p>
+    <div class="code"><pre>cat ~/Desktop/supplier-bidding/app/supabase/07_admin.sql | pbcopy</pre><button class="copy" data-copy="cat ~/Desktop/supplier-bidding/app/supabase/07_admin.sql | pbcopy">คัดลอก</button></div>
+    <ol>
+      <li>วางใน SQL Editor แล้ว Run (ครั้งเดียว)</li>
+      <li>เข้าเว็บด้วยบัญชีฝ่ายจัดซื้อ → เมนู <b>ผู้ใช้และผู้ขาย</b></li>
+      <li>กด <b>ตั้งรหัสใหม่</b> ที่บรรทัดของผู้ขาย → ระบบสุ่มรหัสให้ เช่น <code>CJx-KdmRxs-472</code> กดคัดลอกแล้วส่งทาง LINE</li>
+      <li>ผู้ขายเข้าด้วยรหัสนั้น แล้วระบบบังคับให้ตั้งรหัสของตัวเองทันที</li>
+    </ol>
+    <div class="note"><b>ข้อจำกัดที่ตั้งใจใส่</b> — ตั้งได้เฉพาะบัญชีผู้ขาย บัญชีฝ่ายจัดซื้อตั้งรหัสให้กันเองไม่ได้
+      (ลดความเสียหายถ้าบัญชีผู้ดูแลถูกยึด) และทุกครั้งที่กดจะถูกบันทึกไว้ในตาราง <code>admin_actions</code></div>
+
+    <h3>วิธีที่ 2 — ตั้งรหัสจาก SQL (ใช้กับบัญชีฝ่ายจัดซื้อ)</h3>
+    <div class="code"><pre>cat ~/Desktop/supplier-bidding/app/supabase/06_reset_password.sql | pbcopy</pre><button class="copy" data-copy="cat ~/Desktop/supplier-bidding/app/supabase/06_reset_password.sql | pbcopy">คัดลอก</button></div>
+    <ol>
+      <li>วางใน SQL Editor แล้วแก้ 2 บรรทัดบนสุด: อีเมลของคนนั้น และรหัสชั่วคราวที่ต้องการ</li>
+      <li>กด Run → ใช้รหัสใหม่เข้าสู่ระบบได้เลย</li>
+      <li>ในไฟล์มีตัวช่วยอีก 4 แบบ (ปิดคอมเมนต์ไว้): ตั้งรหัสเดียวกันให้ทุกคน · ปลดเงื่อนไขบังคับเปลี่ยนรหัส ·
+        บังคับให้คนใดคนหนึ่งเปลี่ยนใหม่ · ดูสถานะผู้ใช้ทั้งหมด</li>
+    </ol>
+    <p class="dim">สคริปต์นี้เขียนรหัสที่เข้ารหัส bcrypt ลง <code>auth.users</code> ตรงๆ ซึ่งเป็นวิธีเดียวกับที่ Supabase ใช้
+      จึงเข้าสู่ระบบได้ปกติ · ไม่มีการเก็บรหัสเป็นข้อความธรรมดาที่ไหน</p>
+
+    <h3>วิธีที่ 3 — ลบผู้ใช้แล้วสร้างใหม่</h3>
+    <p class="muted">Authentication → Users → ลบผู้ใช้ → Add user ใส่รหัสที่ต้องการ + ติ๊ก Auto Confirm →
+      แล้วรัน <code>05_seed.sql</code> อีกครั้งเพื่อผูกโปรไฟล์กลับ</p>
+    <div class="note"><b>ใช้ได้เฉพาะช่วงยังไม่มีข้อมูลจริง</b> — ถ้ามีใบเสนอราคาของผู้ใช้นั้นอยู่แล้ว การลบจะติด foreign key
+      ให้ใช้วิธีที่ 1 แทน</div>
+
+    <h3>ถ้าต้องการให้ผู้ขายกด “ลืมรหัสผ่าน” เองได้ (ทำภายหลัง)</h3>
+    <ol>
+      <li>สมัคร resend.com (ฟรี 3,000 ฉบับ/เดือน) → สร้าง API key → ยืนยันโดเมนผู้ส่ง</li>
+      <li>Supabase → Project Settings → <b>Authentication → SMTP Settings</b> → เปิด Custom SMTP</li>
+      <li>Host <code>smtp.resend.com</code> · Port <code>465</code> · User <code>resend</code> · Password = API key</li>
+      <li>Sender email ใช้โดเมนที่ยืนยันแล้ว เช่น <code>noreply@bidding.cjmart.co.th</code></li>
+    </ol>
+    <p class="dim">ต้องให้ IT เพิ่ม SPF/DKIM ของโดเมนด้วย ไม่งั้นอีเมลจะเข้า junk</p>
+  </div></div>
+</section>
+
 <!-- ============ วิธีแก้ ============ -->
 <section class="phase">
   <div class="phasehead"><span class="tag">แก้ไข</span><h2>ต่อไปถ้าจะแก้ ต้องทำอะไร</h2></div>
   <p class="muted">มี 3 แบบ แยกกันชัดเจน เลือกตามสิ่งที่จะแก้</p>
+
+  <div class="step" style="grid-template-columns:1fr"><div class="body">
+    <h3>ทำครั้งเดียว กับ ทำทุกครั้งที่แก้</h3>
+    <p class="muted">สิ่งที่ตั้งไว้แล้วไม่ต้องทำซ้ำ — ขั้น 1–11 ในคู่มือนี้ทำ<b>ครั้งเดียวตลอดอายุระบบ</b></p>
+    <div class="tablewrap"><table>
+      <thead><tr><th>สิ่งที่ทำ</th><th>ทำเมื่อไร</th></tr></thead>
+      <tbody>
+        <tr><td>ติดตั้ง Node · สร้าง Supabase · รัน SQL · สร้างผู้ใช้ · สร้าง repo GitHub · ต่อ Cloudflare · ผูกโดเมน</td>
+            <td><b>ครั้งเดียว</b> ไม่ต้องทำซ้ำอีก</td></tr>
+        <tr><td>แก้ไฟล์ใน <code>src</code> แล้ว <code>git push</code></td>
+            <td>ทุกครั้งที่แก้หน้าเว็บ — Cloudflare build ใหม่<b>เองอัตโนมัติ</b> ~1 นาที ไม่ต้องเข้าหน้า Cloudflare</td></tr>
+        <tr><td>วาง SQL ใน SQL Editor</td><td>เฉพาะตอนแก้กติกา — มีผลทันที ไม่ต้อง deploy</td></tr>
+        <tr><td>แก้ข้อมูลใน Table Editor</td><td>เฉพาะตอนเพิ่มผู้ขาย/ผู้ใช้ — มีผลทันที</td></tr>
+        <tr><td>แก้ Environment variables ใน Cloudflare</td><td>เฉพาะตอนย้ายโปรเจกต์ Supabase — ต้องกด <b>Retry deployment</b> ค่าจึงมีผล</td></tr>
+      </tbody>
+    </table></div>
+    <div class="note good"><b>ของที่ไม่เคยหายไปตอนแก้</b> — ฐานข้อมูล ผู้ใช้ ไฟล์ที่อัปโหลด ประวัติการประมูล repo GitHub
+      และการตั้งค่า Cloudflare ทั้งหมด การ deploy ใหม่แค่เปลี่ยนไฟล์หน้าเว็บเท่านั้น</div>
+    <div class="note warn"><b>ข้อควรรู้</b> — ตอน <code>npm run dev</code> ในเครื่อง มันต่อ Supabase <b>ตัวเดียวกับของจริง</b>
+      ทดสอบอะไรจะกระทบข้อมูลจริง ถ้าอยากแยก ให้สร้างโปรเจกต์ Supabase ตัวที่สองเป็นชุดทดสอบ แล้วสลับค่าใน <code>.env</code></div>
+  </div></div>
 
   <div class="flows">
     <div class="flow">
@@ -411,9 +493,17 @@ git push">คัดลอก</button></div>
       <tr><td>ราคาไม่ขึ้นเรียลไทม์</td><td>ตาราง bids ยังไม่เข้า publication</td><td>รันบรรทัดท้ายของ <code>01_schema.sql</code> ที่เป็น <code>alter publication</code> ซ้ำอีกครั้ง</td></tr>
       <tr><td>Cloudflare build fail หา package.json ไม่เจอ</td><td>ไม่ได้ตั้ง Root directory</td><td>Settings → Builds → Root directory ใส่ <code>app</code> แล้ว Retry deployment</td></tr>
       <tr><td>เว็บขึ้นหน้าขาว</td><td>ลืมใส่ env vars ใน Cloudflare</td><td>ใส่ 2 ตัวแล้วกด Retry deployment (ต้อง build ใหม่ค่าจึงมีผล)</td></tr>
+      <tr><td><code>syntax error at or near "suppliers"</code> ตอนรัน SQL</td><td>วางไม่ครบไฟล์ หรือมีข้อความถูกเลือกค้างในหน้าต่าง (Supabase รันเฉพาะส่วนที่เลือก)</td><td>ใช้ <code>… | pbcopy</code> คัดลอกทั้งไฟล์ คลิกที่ว่างหนึ่งครั้ง แล้วกด Run · ใช้ไฟล์ <code>00_all_in_one.sql</code> จะรันครั้งเดียวจบ</td></tr>
+      <tr><td><code>violates foreign key constraint "profiles_id_fkey"</code></td><td>อีเมล/UUID ในไฟล์ seed ไม่ตรงกับผู้ใช้ใน Authentication</td><td>ไฟล์ seed เวอร์ชันใหม่ค้นหาจากอีเมลและบอกชัดว่าอีเมลไหนหาไม่เจอ — แก้ให้ตรงแล้วรันใหม่</td></tr>
       <tr><td>ผู้ขายบอกว่าติดหน้าให้เปลี่ยนรหัส ผ่านไปไม่ได้</td><td>รหัสเดิมที่กรอกไม่ตรงกับที่ตั้งไว้</td><td>ตั้งรหัสใหม่ให้ที่ Authentication → คลิกผู้ใช้ → Reset password แล้วแจ้งเขาอีกครั้ง</td></tr>
+      <tr><td>กดบันทึกรหัสผ่านแล้วค้าง / ขึ้นว่าไม่ตอบกลับใน 12 วินาที</td>
+        <td>auth lock ของ supabase ถูกจับค้าง — เกิดจาก 2 อย่าง: (1) เรียก auth ซ้อนใน onAuthStateChange (2) ตอน <code>npm run dev</code> ทุกครั้งที่แก้ไฟล์ HMR สร้าง GoTrueClient ตัวใหม่ ทำให้มีหลายตัวแย่ง lock กัน</td>
+        <td>อัปเดตโค้ดชุดล่าสุด (client เป็น singleton บน globalThis แล้ว + ใช้ client แยกตอนตรวจรหัสเดิม) แล้ว <b>กด ⌘⇧R รีเฟรชแบบล้างแคช</b> หรือหยุด <code>npm run dev</code> แล้วสั่งใหม่ — HMR อย่างเดียวไม่พอ เพราะ client ตัวเก่ายังอยู่ในหน้าเดิม</td></tr>
+      <tr><td>ขึ้นข้อความว่า Secure password change</td><td>Supabase เปิดโหมดต้องยืนยันตัวตนซ้ำก่อนเปลี่ยนรหัส</td><td>Authentication → Providers → Email → ปิด Secure password change หรือให้ผู้ใช้ใช้ปุ่ม “ลืมรหัสผ่าน” แทน</td></tr>
+      <tr><td>อยากรู้ว่าค้างที่ขั้นไหน</td><td>—</td><td>เปิด DevTools → Console จะเห็น <code>[รหัสผ่าน] ขั้น 1/3 ตรวจรหัสเดิม</code> ไปจนถึง 3/3 บอกตำแหน่งที่ค้างชัดเจน</td></tr>
+      <tr><td>เปลี่ยนรหัสสำเร็จแต่ยังเจอหน้าบังคับเปลี่ยนซ้ำ</td><td>ธง <code>must_change_password</code> ยังไม่ถูกล้าง</td><td>SQL Editor: <code>update profiles set must_change_password = false where id = (select id from auth.users where email = 'อีเมลของเขา');</code></td></tr>
       <tr><td>อยากบังคับให้ใครเปลี่ยนรหัสใหม่อีกครั้ง</td><td>เช่น สงสัยว่ารหัสรั่ว</td><td>SQL Editor รัน <code>update profiles set must_change_password = true where id = 'UUID';</code></td></tr>
-      <tr><td>กดลืมรหัสผ่านแล้วไม่ได้อีเมล</td><td>โควตาอีเมลของ Supabase ฟรีจำกัดไม่กี่ฉบับต่อชั่วโมง</td><td>รอแล้วลองใหม่ หรือต่อ SMTP ภายนอก (Resend/Brevo) ที่ Auth → SMTP Settings</td></tr>
+      <tr><td>กดลืมรหัสผ่านแล้วขึ้น <code>HTTP 504</code> / ไม่ได้อีเมล</td><td>บริการอีเมลในตัวของ Supabase free tier ไม่ตอบหรือเกินโควตา</td><td>ใช้เมนู <b>ผู้ใช้และผู้ขาย</b> ในเว็บกดตั้งรหัสให้ (รัน <code>07_admin.sql</code> ครั้งเดียวก่อน) · ถ้าต้องการให้ผู้ขายรีเซ็ตเองทางอีเมล ต้องต่อ Custom SMTP</td></tr>
       <tr><td>ระบบใช้งานไม่ได้หลังหยุดใช้นานหลายวัน</td><td>โปรเจกต์ Supabase ฟรีถูก pause หลังไม่มีการใช้งาน 7 วัน</td><td>เข้า Supabase กด Restore project ใช้ได้ตามปกติ ถ้ามีคนใช้ทุกวันจะไม่โดน</td></tr>
     </tbody>
   </table></div>

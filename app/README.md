@@ -15,7 +15,9 @@ React + Vite (frontend) · Supabase (Postgres + Auth + Storage + Realtime) · �
 - ฝ่ายจัดซื้อตั้งรหัสแรกให้ แล้ว **ระบบบังคับให้เจ้าของบัญชีเปลี่ยนเองก่อนใช้งาน** (`profiles.must_change_password`)
   ระหว่างที่ยังไม่เปลี่ยน `submit_bid()` และ `create_tender()` จะปฏิเสธ — ไม่ใช่กันแค่ที่หน้าจอ
 - เปลี่ยนรหัสเองภายหลังได้จากปุ่มในแถบข้าง (ยืนยันรหัสเดิมก่อนทุกครั้ง)
-- ลืมรหัสผ่าน → ปุ่มในหน้าเข้าสู่ระบบ ส่งลิงก์ทางอีเมล (Supabase `resetPasswordForEmail`) พร้อมระบบ **ราคาคาดหวัง + ค้อน**
+- ลืมรหัสผ่าน → ปุ่มในหน้าเข้าสู่ระบบ ส่งลิงก์ทางอีเมล (Supabase `resetPasswordForEmail`)
+  **ต้องต่อ Custom SMTP ก่อนใช้จริง** — อีเมลในตัวของ free tier มักตอบ `HTTP 504`
+- ตั้งรหัสให้ผู้ใช้โดยไม่ง้ออีเมล: `supabase/06_reset_password.sql` (เขียน bcrypt ลง `auth.users` ตรงๆ) พร้อมระบบ **ราคาคาดหวัง + ค้อน**
 ที่ย้ายไปหาผู้เสนอราคาต่ำสุดที่ถึงเกณฑ์โดยอัตโนมัติ
 
 ---
@@ -25,11 +27,13 @@ React + Vite (frontend) · Supabase (Postgres + Auth + Storage + Realtime) · �
 ```
 app/
 ├── supabase/
+│   ├── 00_all_in_one.sql  ← ใช้ไฟล์นี้ตอนติดตั้ง (รวม 01–04 ไว้ในไฟล์เดียว รันซ้ำได้)
 │   ├── 01_schema.sql      ตาราง ทั้งหมด + สถานะงาน + เปิด realtime
 │   ├── 02_rls.sql         Row Level Security ← กติกาการมองเห็นราคาอยู่ที่นี่
 │   ├── 03_functions.sql   RPC: submit_bid / unseal_tender / award_bid / create_tender / hammer_holder
 │   ├── 04_storage.sql     bucket ไฟล์แนบ + policy ตาม path
-│   └── 05_seed.sql        ข้อมูลตัวอย่าง (แก้ UUID ผู้ใช้ก่อนรัน)
+│   ├── 05_seed.sql        ข้อมูลตัวอย่าง (ค้นหาผู้ใช้จากอีเมล)
+│   └── 06_reset_password.sql  ตั้งรหัสผ่านใหม่ให้ผู้ใช้จาก SQL (ใช้ตอนอีเมลใช้ไม่ได้)
 ├── src/
 │   ├── styles.css         ธีมทั้งระบบ (สี ฟอนต์ ระยะ) — แก้ที่ :root ที่เดียว
 │   ├── lib/supabase.js    สร้าง client จาก .env
@@ -48,15 +52,22 @@ app/
 **2.1 สร้างโปรเจกต์ Supabase**
 supabase.com → New project → Region **Southeast Asia (Singapore)** → ตั้ง Database Password เก็บไว้
 
-**2.2 รัน SQL ตามลำดับ**
-Dashboard → SQL Editor → วางเนื้อไฟล์แล้วกด Run ทีละไฟล์: `01_schema.sql` → `02_rls.sql` → `03_functions.sql` → `04_storage.sql`
+**2.2 ติดตั้งฐานข้อมูล (วางครั้งเดียว)**
+```bash
+cat app/supabase/00_all_in_one.sql | pbcopy
+```
+Dashboard → SQL Editor → New query → ⌘V → **คลิกที่พื้นที่ว่างหนึ่งครั้ง** (ถ้ามีข้อความถูกเลือกค้าง Supabase จะรันเฉพาะส่วนที่เลือก
+ซึ่งทำให้ขึ้น `syntax error at or near "suppliers"`) → Run
+
+ไฟล์นี้ลบโครงเดิมทิ้งก่อนสร้างใหม่ จึงรันซ้ำได้ตอนติดตั้ง แต่ห้ามรันหลังมีข้อมูลจริง
 
 **2.3 สร้างผู้ใช้**
 Authentication → Users → Add user (ใส่อีเมล + รหัสผ่าน + ติ๊ก Auto Confirm)
 สร้าง 1 บัญชีฝ่ายจัดซื้อ และ 1 บัญชีต่อ 1 ซัพพลายเออร์ แล้วคัดลอก UUID ของแต่ละคนไว้
 
 **2.4 ใส่ข้อมูลตั้งต้น**
-เปิด `05_seed.sql` แก้ UUID 4 บรรทัดบนสุดให้ตรงกับผู้ใช้ที่สร้าง แล้วรัน
+`05_seed.sql` ค้นหาผู้ใช้จาก **อีเมล** (ไม่ต้องคัดลอก UID) — แก้ 4 บรรทัดบนสุดถ้าอีเมลไม่ตรง แล้วรัน
+ถ้าอีเมลไหนไม่มีในระบบ ไฟล์จะขึ้นข้อความไทยบอกชัด ไม่ปล่อยให้เจอ `profiles_id_fkey`
 
 **2.5 รันหน้าเว็บ**
 ```bash

@@ -1,40 +1,66 @@
 -- ============================================================================
 -- ข้อมูลตัวอย่าง — รันหลังสร้างผู้ใช้ใน Authentication > Users แล้ว
 --
--- ขั้นตอน
---   1) Dashboard > Authentication > Users > Add user (ใส่อีเมล + รหัสผ่าน)
---      สร้าง 1 บัญชีสำหรับฝ่ายจัดซื้อ และ 1 บัญชีต่อ 1 ซัพพลายเออร์
---   2) คัดลอก UUID ของแต่ละ user มาแทนใน block ด้านล่าง
---   3) รันไฟล์นี้
+-- ไฟล์นี้ค้นหาผู้ใช้จาก "อีเมล" ไม่ต้องคัดลอก UUID มาวางแล้ว
+-- แก้แค่ 4 บรรทัดที่มีเครื่องหมาย  << แก้  ให้ตรงกับอีเมลที่สร้างไว้
+--
+-- วิธีคัดลอกไฟล์นี้แบบไม่ตกหล่น (แนะนำ):
+--   cat ~/Desktop/supplier-bidding/app/supabase/05_seed.sql | pbcopy
+-- แล้วไปวางใน SQL Editor · กดที่พื้นที่ว่างก่อนกด Run เพื่อไม่ให้มีข้อความถูกเลือกค้าง
 -- ============================================================================
 
 -- ---------- บริษัทผู้ขาย ----------
 insert into public.suppliers (code, name, tax_id) values
-  ('V-1042','บจก. สยามฟู้ดส์ ซัพพลาย','0105551234567'),
-  ('V-2318','บจก. เอเชีย แพ็คเกจจิ้ง','0105557654321'),
-  ('V-3077','หจก. ทรัพย์รุ่งเรือง เทรดดิ้ง','0103556789012')
+  ('V-1001','Buum Company',   null),
+  ('V-1002','Amm Company',    null),
+  ('V-1003','Sanddy Company', null)
 on conflict (code) do nothing;
+-- เลขผู้เสียภาษีเติมภายหลังได้ที่ Table Editor > suppliers
 
--- ---------- ผู้ใช้ ----------
--- แก้ UUID ทั้ง 4 บรรทัดนี้ให้ตรงกับ user ที่สร้างไว้ในขั้นตอนที่ 1
+-- ---------- ผูกผู้ใช้กับบทบาทและบริษัท ----------
 do $$
 declare
-  buyer_uid uuid := '00000000-0000-0000-0000-000000000001';  -- << แก้
-  sup1_uid  uuid := '00000000-0000-0000-0000-000000000002';  -- << แก้ (V-1042)
-  sup2_uid  uuid := '00000000-0000-0000-0000-000000000003';  -- << แก้ (V-2318)
-  sup3_uid  uuid := '00000000-0000-0000-0000-000000000004';  -- << แก้ (V-3077)
+  em_buyer text := 'natthawut.yut@cjmart.co.th';   -- ฝ่ายจัดซื้อกลาง
+  em_sup1  text := 'chatnapa.ton@cjmart.co.th';    -- Buum Company   (V-1001)
+  em_sup2  text := 'passara.rat@cjmart.co.th';     -- Amm Company    (V-1002)
+  em_sup3  text := 'saksit.sai@cjmart.co.th';      -- Sanddy Company (V-1003)
+
+  u_buyer uuid; u1 uuid; u2 uuid; u3 uuid;
+  missing text := '';
 begin
-  -- must_change_password ปล่อยเป็น true (ค่าเริ่มต้น) ทุกบัญชี
+  select id into u_buyer from auth.users where lower(email) = lower(em_buyer);
+  select id into u1      from auth.users where lower(email) = lower(em_sup1);
+  select id into u2      from auth.users where lower(email) = lower(em_sup2);
+  select id into u3      from auth.users where lower(email) = lower(em_sup3);
+
+  if u_buyer is null then missing := missing || em_buyer || ', '; end if;
+  if u1 is null      then missing := missing || em_sup1  || ', '; end if;
+  if u2 is null      then missing := missing || em_sup2  || ', '; end if;
+  if u3 is null      then missing := missing || em_sup3  || ', '; end if;
+
+  if missing <> '' then
+    raise exception
+      'ยังไม่พบผู้ใช้เหล่านี้ใน Authentication > Users: %— ให้สร้างผู้ใช้ (ติ๊ก Auto Confirm) หรือแก้อีเมล 4 บรรทัดบนสุดของไฟล์นี้ให้ตรงกับที่สร้างไว้ แล้วรันใหม่',
+      missing;
+  end if;
+
+  -- must_change_password ปล่อยเป็นค่าเริ่มต้น true ทุกบัญชี
   -- ทุกคนจะถูกบังคับเปลี่ยนรหัสที่ฝ่ายจัดซื้อตั้งให้ ตอนเข้าใช้งานครั้งแรก
   insert into public.profiles (id, role, full_name, position, supplier_id) values
-    (buyer_uid,'buyer','นฤมล กิตติวัฒน์','Senior Buyer', null),
-    (sup1_uid,'supplier','ธนกร วงศ์อนันต์','ผู้จัดการฝ่ายขาย',
-      (select id from public.suppliers where code='V-1042')),
-    (sup2_uid,'supplier','ปิยะ สุขเจริญ','Key Account',
-      (select id from public.suppliers where code='V-2318')),
-    (sup3_uid,'supplier','วรินทร ตั้งมั่น','เจ้าของกิจการ',
-      (select id from public.suppliers where code='V-3077'))
-  on conflict (id) do nothing;
+    (u_buyer,'buyer','Natthawut','ฝ่ายจัดซื้อกลาง', null),
+    (u1,'supplier','Chatnapa','ผู้ติดต่อ',
+      (select id from public.suppliers where code='V-1001')),
+    (u2,'supplier','Passara','ผู้ติดต่อ',
+      (select id from public.suppliers where code='V-1002')),
+    (u3,'supplier','Saksit','ผู้ติดต่อ',
+      (select id from public.suppliers where code='V-1003'))
+  on conflict (id) do update
+    set role = excluded.role,
+        full_name = excluded.full_name,
+        position = excluded.position,
+        supplier_id = excluded.supplier_id;
+
+  raise notice 'ผูกผู้ใช้เรียบร้อย 4 บัญชี';
 end $$;
 
 -- ---------- ประกาศตัวอย่าง 2 งาน (เปิดราคา 1 / ปิดราคา 1) ----------
@@ -44,7 +70,11 @@ declare
   v_open  uuid; v_sealed uuid;
 begin
   if v_buyer is null then
-    raise notice 'ยังไม่มี profile ของฝ่ายจัดซื้อ ข้ามการสร้างประกาศตัวอย่าง';
+    raise notice 'ยังไม่มีโปรไฟล์ฝ่ายจัดซื้อ ข้ามการสร้างประกาศตัวอย่าง';
+    return;
+  end if;
+  if exists (select 1 from public.tenders) then
+    raise notice 'มีประกาศอยู่แล้ว ข้ามการสร้างข้อมูลตัวอย่าง (กันข้อมูลซ้ำเวลารันไฟล์นี้หลายครั้ง)';
     return;
   end if;
 
@@ -88,4 +118,12 @@ begin
     (v_sealed,'ใบรับรอง GMP/HACCP',2);
   insert into public.tender_invites (tender_id, supplier_id)
     select v_sealed, id from public.suppliers;
+
+  raise notice 'สร้างประกาศตัวอย่าง 2 งานเรียบร้อย';
 end $$;
+
+-- ---------- ตรวจผล ----------
+select p.role, p.full_name, coalesce(s.name,'ฝ่ายจัดซื้อกลาง') as org,
+       p.must_change_password as "ต้องเปลี่ยนรหัสครั้งแรก"
+from public.profiles p left join public.suppliers s on s.id = p.supplier_id
+order by p.role desc, s.code;
