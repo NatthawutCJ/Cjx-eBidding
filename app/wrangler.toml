@@ -1,0 +1,12 @@
+# ตั้งค่าสำหรับ Cloudflare Workers Builds (คำสั่ง npx wrangler deploy)
+# ไฟล์นี้บอก Cloudflare ว่าให้เอาโฟลเดอร์ dist ที่ build เสร็จไปเสิร์ฟเป็นเว็บสแตติก
+#
+# สำคัญ: ค่า name ต้องตรงกับชื่อ Worker ที่สร้างไว้ใน Cloudflare
+#        (ดูได้ที่ Worker > Settings > Worker name) ถ้าไม่ตรง wrangler จะไปสร้าง Worker ใหม่ให้
+name = "cjx-ebidding"
+compatibility_date = "2026-08-01"
+
+[assets]
+directory = "./dist"
+# ทุก path ที่ไม่มีไฟล์จริง ให้ส่ง index.html กลับไป (จำเป็นสำหรับเว็บแบบ SPA)
+not_found_handling = "single-page-application"
