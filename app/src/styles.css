@@ -267,3 +267,6 @@ td.mono,tfoot td.mono{font-family:var(--font-m);font-variant-numeric:tabular-num
 .checks label{display:flex;gap:.5rem;align-items:center;font-size:.9rem}
 input[type=checkbox]{width:16px;height:16px;accent-color:var(--accent);flex:none}
 @media (prefers-reduced-motion:reduce){*{animation-duration:.001ms!important;transition-duration:.001ms!important}}
+
+/* ---------- หน้าบังคับเปลี่ยนรหัสผ่านครั้งแรก ---------- */
+.note-forced{border-left-color:var(--warn)!important;background:var(--warn-wash)!important}

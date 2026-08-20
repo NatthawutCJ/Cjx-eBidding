@@ -8,6 +8,7 @@ import TenderList from './components/TenderList.jsx'
 import TenderDetail from './components/TenderDetail.jsx'
 import BuyerDashboard from './components/BuyerDashboard.jsx'
 import CreateTender from './components/CreateTender.jsx'
+import ChangePassword from './components/ChangePassword.jsx'
 
 const NAV = {
   buyer: [['dash', 'ภาพรวม', ICON.chart], ['list', 'ประกาศประมูล', ICON.list], ['feed', 'ความเคลื่อนไหว', ICON.bolt]],
@@ -16,6 +17,7 @@ const NAV = {
 
 export default function App() {
   const [profile, setProfile] = useState(undefined)   // undefined = กำลังตรวจ session
+  const [recovery, setRecovery] = useState(false)     // มาจากลิงก์ตั้งรหัสใหม่ในอีเมล
 
   const loadProfile = useCallback(async () => {
     try { setProfile(await getProfile()) }
@@ -24,12 +26,24 @@ export default function App() {
 
   useEffect(() => {
     loadProfile()
-    const { data } = supabase.auth.onAuthStateChange(() => loadProfile())
+    const { data } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'PASSWORD_RECOVERY') setRecovery(true)   // ผู้ใช้กดลิงก์ในอีเมลลืมรหัสผ่าน
+      loadProfile()
+    })
     return () => data.subscription.unsubscribe()
   }, [loadProfile])
 
   if (profile === undefined) return <><div className="login"><p className="dim">กำลังเข้าสู่ระบบ…</p></div><Toasts /></>
   if (!profile) return <><Login /><Toasts /></>
+
+  // ตั้งรหัสใหม่จากลิงก์อีเมล
+  if (recovery) return <><ChangePassword mode="recovery" profile={profile}
+    onDone={() => { setRecovery(false); loadProfile() }} /><Toasts /></>
+
+  // รหัสที่ฝ่ายจัดซื้อตั้งให้ ต้องเปลี่ยนก่อนใช้งาน (ฝั่ง server ก็ปฏิเสธการยื่นราคาไว้ด้วย)
+  if (profile.must_change_password) return <><ChangePassword mode="forced" profile={profile}
+    onDone={loadProfile} /><Toasts /></>
+
   return <><Shell profile={profile} /><Toasts /></>
 }
 
@@ -41,6 +55,7 @@ function Shell({ profile }) {
   const [sheet, setSheet] = useState(null)
   const [loading, setLoading] = useState(true)
   const [suppliers, setSuppliers] = useState([])
+  const [pwOpen, setPwOpen] = useState(false)
 
   const reload = useCallback(() => {
     setLoading(true)
@@ -103,6 +118,7 @@ function Shell({ profile }) {
               <span className="dim">{profile.full_name}</span>
             </span>
           </div>
+          <button className="btn sm block" onClick={() => setPwOpen(true)}>เปลี่ยนรหัสผ่าน</button>
           <button className="btn sm block" onClick={() => signOut()}>ออกจากระบบ</button>
         </div>
       </aside>
@@ -123,6 +139,9 @@ function Shell({ profile }) {
           </button>
         ))}
       </nav>
+
+      {pwOpen && <ChangePassword mode="sheet" profile={profile} onClose={() => setPwOpen(false)}
+                                 onDone={() => setPwOpen(false)} />}
 
       {sheet === 'create' && (
         <CreateTender suppliers={suppliers} onClose={() => setSheet(null)}

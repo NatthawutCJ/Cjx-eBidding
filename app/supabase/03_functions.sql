@@ -3,6 +3,23 @@
 -- ทุกอย่างที่ต้องเชื่อถือได้ (ยอดรวม, กติกาปิดซอง, เวลาเปิดซอง) คำนวณและตรวจที่นี่
 -- ============================================================================
 
+-- ---------- รหัสผ่าน: บันทึกว่าเปลี่ยนเองแล้ว ----------
+-- เรียกหลัง supabase.auth.updateUser({password}) สำเร็จ
+create or replace function public.mark_password_changed()
+returns void language plpgsql security definer set search_path = public as $$
+begin
+  if auth.uid() is null then raise exception 'ต้องเข้าสู่ระบบก่อน'; end if;
+  update public.profiles
+     set must_change_password = false, password_changed_at = now()
+   where id = auth.uid();
+end $$;
+
+-- ยังใช้รหัสที่ฝ่ายจัดซื้อตั้งให้อยู่หรือไม่
+create or replace function public.must_change_password() returns boolean
+language sql stable security definer set search_path = public as $$
+  select coalesce((select must_change_password from public.profiles where id = auth.uid()), false)
+$$;
+
 -- ---------- เลขที่ประกาศ RFQ_YYYY_MM_NNN (รันเลขต่อเดือน) ----------
 create or replace function public.next_tender_code()
 returns text language plpgsql security definer set search_path = public as $$
@@ -111,6 +128,9 @@ declare
 begin
   if v_supplier is null then
     raise exception 'บัญชีนี้ไม่ใช่ผู้ขาย จึงยื่นราคาไม่ได้';
+  end if;
+  if public.must_change_password() then
+    raise exception 'กรุณาเปลี่ยนรหัสผ่านก่อนใช้งาน เพื่อไม่ให้ผู้อื่นยื่นราคาในนามบริษัทของท่านได้';
   end if;
 
   select * into v_t from public.tenders where id = p_tender;
@@ -238,6 +258,7 @@ returns uuid language plpgsql security definer set search_path = public as $$
 declare v_id uuid; v_code text;
 begin
   if not public.is_buyer() then raise exception 'เฉพาะฝ่ายจัดซื้อเท่านั้น'; end if;
+  if public.must_change_password() then raise exception 'กรุณาเปลี่ยนรหัสผ่านก่อนใช้งาน'; end if;
   if jsonb_array_length(coalesce(p->'items','[]'::jsonb)) = 0 then
     raise exception 'ต้องมีรายการที่ต้องการอย่างน้อย 1 รายการ';
   end if;
@@ -330,5 +351,6 @@ grant execute on function
   public.next_tender_code, public.tender_bid_count, public.hammer_holder,
   public.submit_bid, public.unseal_tender, public.award_bid,
   public.create_tender, public.decline_invite, public.attach_bid_files,
-  public.my_target_status, public.my_hammer_state
+  public.my_target_status, public.my_hammer_state,
+  public.mark_password_changed, public.must_change_password
 to authenticated;

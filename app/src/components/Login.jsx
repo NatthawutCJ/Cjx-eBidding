@@ -1,11 +1,20 @@
 import { useState } from 'react'
-import { signIn } from '../lib/api'
+import { signIn, requestPasswordReset } from '../lib/api'
 
 export default function Login() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState('')
+  const [sent, setSent] = useState(false)
+
+  async function onForgot() {
+    if (!email.trim()) return setErr('กรอกอีเมลก่อน แล้วกดลืมรหัสผ่านอีกครั้ง')
+    setErr(''); setBusy(true)
+    try { await requestPasswordReset(email); setSent(true) }
+    catch (e) { setErr('ส่งอีเมลไม่สำเร็จ: ' + e.message) }
+    finally { setBusy(false) }
+  }
 
   async function onSubmit(e) {
     e.preventDefault()
@@ -49,11 +58,16 @@ export default function Login() {
             <b>เข้าสู่ระบบไม่สำเร็จ</b><br />{err}
           </div>}
 
+          {sent && <div className="rule" style={{ borderLeftColor: 'var(--good)', background: 'var(--good-wash)' }}>
+            <b>ส่งลิงก์ตั้งรหัสผ่านใหม่แล้ว</b><br />ตรวจอีเมล {email} แล้วกดลิงก์ในนั้น (ตรวจกล่อง junk ด้วย)
+          </div>}
+
           <button className="btn primary block" type="submit" disabled={busy}>
             {busy ? 'กำลังเข้าสู่ระบบ…' : 'เข้าสู่ระบบ'}
           </button>
+          <button className="btn block" type="button" onClick={onForgot} disabled={busy}>ลืมรหัสผ่าน</button>
           <p className="dim">
-            ลืมรหัสผ่าน หรือยังไม่ได้รับคำเชิญ ติดต่อฝ่ายจัดซื้อ procurement@cjmart.co.th
+            ยังไม่ได้รับบัญชี ติดต่อฝ่ายจัดซื้อ procurement@cjmart.co.th
           </p>
         </div>
       </form>

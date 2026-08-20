@@ -24,6 +24,8 @@ declare
   sup2_uid  uuid := '00000000-0000-0000-0000-000000000003';  -- << แก้ (V-2318)
   sup3_uid  uuid := '00000000-0000-0000-0000-000000000004';  -- << แก้ (V-3077)
 begin
+  -- must_change_password ปล่อยเป็น true (ค่าเริ่มต้น) ทุกบัญชี
+  -- ทุกคนจะถูกบังคับเปลี่ยนรหัสที่ฝ่ายจัดซื้อตั้งให้ ตอนเข้าใช้งานครั้งแรก
   insert into public.profiles (id, role, full_name, position, supplier_id) values
     (buyer_uid,'buyer','นฤมล กิตติวัฒน์','Senior Buyer', null),
     (sup1_uid,'supplier','ธนกร วงศ์อนันต์','ผู้จัดการฝ่ายขาย',

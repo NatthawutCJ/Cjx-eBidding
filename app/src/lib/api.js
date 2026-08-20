@@ -8,12 +8,43 @@ export async function signIn(email, password) {
 }
 export const signOut = () => supabase.auth.signOut()
 
+// ---------- รหัสผ่าน ----------
+// ยืนยันรหัสเดิมก่อนเปลี่ยน (กันคนที่แอบใช้เครื่องที่เปิดค้างไว้ และรองรับ Secure password change ของ Supabase)
+export async function changePassword(email, currentPassword, newPassword) {
+  if (newPassword.length < 8) throw new Error('รหัสผ่านใหม่ต้องยาวอย่างน้อย 8 ตัวอักษร')
+  if (newPassword === currentPassword) throw new Error('รหัสผ่านใหม่ต้องไม่ซ้ำกับรหัสเดิม')
+
+  const { error: reauth } = await supabase.auth.signInWithPassword({ email, password: currentPassword })
+  if (reauth) throw new Error('รหัสผ่านเดิมไม่ถูกต้อง')
+
+  const { error } = await supabase.auth.updateUser({ password: newPassword })
+  if (error) throw new Error('เปลี่ยนรหัสผ่านไม่สำเร็จ: ' + error.message)
+
+  const { error: rpcErr } = await supabase.rpc('mark_password_changed')
+  if (rpcErr) throw new Error('เปลี่ยนรหัสผ่านแล้ว แต่บันทึกสถานะไม่สำเร็จ: ' + rpcErr.message)
+}
+
+// ตั้งรหัสใหม่จากลิงก์ในอีเมล (ไม่ต้องรู้รหัสเดิม)
+export async function setNewPassword(newPassword) {
+  if (newPassword.length < 8) throw new Error('รหัสผ่านต้องยาวอย่างน้อย 8 ตัวอักษร')
+  const { error } = await supabase.auth.updateUser({ password: newPassword })
+  if (error) throw new Error('ตั้งรหัสผ่านไม่สำเร็จ: ' + error.message)
+  await supabase.rpc('mark_password_changed')
+}
+
+export async function requestPasswordReset(email) {
+  const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+    redirectTo: window.location.origin,
+  })
+  if (error) throw new Error(error.message)
+}
+
 export async function getProfile() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return null
   const { data, error } = await supabase
     .from('profiles')
-    .select('id, role, full_name, position, supplier_id, suppliers(id, code, name)')
+    .select('id, role, full_name, position, supplier_id, must_change_password, password_changed_at, suppliers(id, code, name)')
     .eq('id', user.id).single()
   if (error) throw error
   return { ...data, email: user.email, org: data.suppliers?.name || 'ฝ่ายจัดซื้อกลาง' }

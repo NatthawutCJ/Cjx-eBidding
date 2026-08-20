@@ -339,7 +339,7 @@ const users = [
   {id:'buy1', role:'buyer',    name:'นฤมล กิตติวัฒน์',  org:'ฝ่ายจัดซื้อกลาง',            pos:'Senior Buyer'},
   {id:'sup1', role:'supplier', name:'ธนกร วงศ์อนันต์',  org:'บจก. สยามฟู้ดส์ ซัพพลาย',   pos:'ผู้จัดการฝ่ายขาย', code:'V-1042'},
   {id:'sup2', role:'supplier', name:'ปิยะ สุขเจริญ',    org:'บจก. เอเชีย แพ็คเกจจิ้ง',    pos:'Key Account',      code:'V-2318'},
-  {id:'sup3', role:'supplier', name:'วรินทร ตั้งมั่น',  org:'หจก. ทรัพย์รุ่งเรือง เทรดดิ้ง', pos:'เจ้าของกิจการ',    code:'V-3077'},
+  {id:'sup3', role:'supplier', name:'วรินทร ตั้งมั่น',  org:'หจก. ทรัพย์รุ่งเรือง เทรดดิ้ง', pos:'เจ้าของกิจการ',    code:'V-3077', mustChange:true},
 ];
 const U = id => users.find(u=>u.id===id) || {name:'—',org:'—'};
 
@@ -356,6 +356,8 @@ const state = {
   sheet: null,           // 'create' | null
   sim: true,
   phone: false,          // โหมดพรีวิวมือถือบนจอคอม
+  pwChanged: {},         // uid ที่เปลี่ยนรหัสเองแล้ว
+  pwSheet: false,        // เปิดหน้าต่างเปลี่ยนรหัสผ่าน
   events: [],
   tenders: [
     {id:'t1', code:'RFQ_2026_08_014', title:'ถุงหูหิ้วพลาสติก HDPE 6 ขนาด (ล็อต ก.ย.)',
@@ -567,10 +569,14 @@ function viewLogin(){
           <button class="acct" data-act="login:${u.id}">
             <span class="avatar">${esc(u.org.replace(/^(บจก\.|หจก\.)\s*/,'').slice(0,2))}</span>
             <span class="t"><b>${esc(u.org)}</b><span class="dim">${esc(u.name)} · ${esc(u.pos)}${u.code?' · '+u.code:''}</span></span>
-            <span class="chip ${u.role==='buyer'?'open':'flat'}">${u.role==='buyer'?'ฝ่ายจัดซื้อ':'ซัพพลายเออร์'}</span>
+            <span class="row" style="gap:.3rem;flex:none">
+              ${u.mustChange && !state.pwChanged[u.id] ? `<span class="chip warn">${ICON.lock}ต้องเปลี่ยนรหัส</span>`:''}
+              <span class="chip ${u.role==='buyer'?'open':'flat'}">${u.role==='buyer'?'ฝ่ายจัดซื้อ':'ซัพพลายเออร์'}</span>
+            </span>
           </button>`).join('')}
       </div>
       <label class="f"><span>รหัสผ่าน</span><input type="password" value="demo-password" autocomplete="off"></label>
+      <button type="button" class="btn block" data-act="forgotpw">ลืมรหัสผ่าน</button>
       <p class="dim">เดโมนี้ยังไม่ต่อระบบยืนยันตัวตนจริง — กดเลือกบัญชีเพื่อเข้าใช้งาน ของจริงจะใช้ Supabase Auth (อีเมล + รหัสผ่าน หรือ OTP) หนึ่งบัญชีต่อหนึ่งผู้ขาย</p>
     </div>
     <p class="dim" style="text-align:center">Prototype · ข้อมูลทั้งหมดเป็นตัวอย่างและอยู่ในเบราว์เซอร์นี้เท่านั้น</p>
@@ -1074,6 +1080,47 @@ function sheetCreate(){
   </form></div>`;
 }
 
+/* ---------------- เปลี่ยนรหัสผ่าน ---------------- */
+const DEMO_TEMP_PW = 'demo-password';
+const needPwChange = () => !!me().mustChange && !state.pwChanged[state.userId];
+
+function pwForm(forced){
+  return `<form class="card" data-act="savepw">
+    <header><h3>${forced?'ตั้งรหัสผ่านของคุณเอง':'เปลี่ยนรหัสผ่าน'}</h3></header>
+    <div class="body stack">
+      ${forced?`<div class="rule" style="border-left-color:var(--warn);background:var(--warn-wash)">
+        <b>ก่อนเริ่มใช้งาน กรุณาเปลี่ยนรหัสผ่าน</b> — รหัสที่ท่านได้รับมาเป็นรหัสที่ฝ่ายจัดซื้อตั้งให้ ซึ่งฝ่ายจัดซื้อรู้ด้วย
+        ถ้าไม่เปลี่ยน จะมีคนอื่นเข้าระบบและยื่นราคาในนามบริษัทของท่านได้</div>`:''}
+      <label class="f"><span>รหัสผ่านเดิม (ที่ได้รับมา)</span>
+        <input type="password" data-pw="cur" required placeholder="${DEMO_TEMP_PW}"></label>
+      <label class="f"><span>รหัสผ่านใหม่</span><input type="password" data-pw="new" required></label>
+      <div class="stack" style="gap:.25rem" data-pwrules>
+        <span class="req no">${ICON.circle}<span>ยาวอย่างน้อย 8 ตัวอักษร</span></span>
+        <span class="req no">${ICON.circle}<span>มีตัวอักษรภาษาอังกฤษ</span></span>
+        <span class="req no">${ICON.circle}<span>มีตัวเลข</span></span>
+      </div>
+      <label class="f"><span>ยืนยันรหัสผ่านใหม่</span><input type="password" data-pw="confirm" required></label>
+      <p class="dim">เดโม: รหัสเดิมคือ <b class="num">${DEMO_TEMP_PW}</b></p>
+    </div>
+    <footer style="padding:.75rem 1rem;border-top:1px solid var(--line);display:flex;gap:.6rem;justify-content:flex-end">
+      ${forced?`<button type="button" class="btn" data-act="logout">ออกจากระบบ</button>`
+              :`<button type="button" class="btn" data-act="closepw">ยกเลิก</button>`}
+      <button class="btn primary" type="submit">บันทึกรหัสผ่านใหม่</button>
+    </footer>
+  </form>`;
+}
+
+function viewForcePw(){
+  return `<div class="login"><div class="loginbox">
+    <div class="row" style="gap:.7rem">
+      <img class="logo" src="${LOGO}" alt="CJx" style="height:52px">
+      <span><b style="font-family:var(--font-d);font-size:1rem;display:block">ระบบประมูลจัดซื้อ</b>
+        <span class="dim">${esc(me().org)}</span></span>
+    </div>
+    ${pwForm(true)}
+  </div></div>`;
+}
+
 /* ---------------- shell ---------------- */
 const NAV = {
   buyer:    [['dash','ภาพรวม',ICON.chart],['list','ประกาศประมูล',ICON.list],['feed','ความเคลื่อนไหว',ICON.bolt]],
@@ -1093,6 +1140,7 @@ function render(){
   const ae = document.activeElement;
   const keep = ae && ae.dataset && (ae.dataset.line ? '[data-line="'+ae.dataset.line+'"]' : (ae.hasAttribute('data-note') ? '[data-note]' : null));
   if (!state.userId){ app.innerHTML = viewLogin(); return; }
+  if (needPwChange()){ app.innerHTML = viewForcePw(); toastHost(); return; }
   const body = state.view==='detail' ? viewDetail()
     : state.view==='mybids' ? viewMyBids()
     : state.view==='feed'   ? viewFeed()
@@ -1104,7 +1152,8 @@ function render(){
     <button class="btn sm phone-toggle" data-act="togglephone">${state.phone?'ดูแบบเดสก์ท็อป':'ดูแบบมือถือ'}</button>
     <button class="btn sm" data-act="logout">สลับบัญชี</button>
     <button class="btn sm" data-act="reset">รีเซ็ตข้อมูล</button>`;
-  const sheet = state.sheet==='create' ? sheetCreate() : '';
+  const sheet = (state.sheet==='create' ? sheetCreate() : '')
+    + (state.pwSheet ? `<div class="scrim" data-act="closepw"><div class="sheet" style="max-width:460px">${pwForm(false)}</div></div>` : '');
   const shell = `<div class="shell">
     <aside class="side">
       <div class="brand"><img class="logo" src="${LOGO}" alt="CJx">
@@ -1116,6 +1165,7 @@ function render(){
           <span style="min-width:0"><b style="font-size:.82rem;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(me().org)}</b>
           <span class="dim">${esc(me().name)}</span></span>
         </div>
+        <button class="btn sm block" data-act="openpw">เปลี่ยนรหัสผ่าน</button>
         <button class="btn sm block" data-act="logout">สลับบัญชี</button>
       </div>
     </aside>
@@ -1162,7 +1212,7 @@ function ev(tenderId, text, buyerOnly){
 function go(view){ state.view = view; state.tenderId = null; render(); }
 
 document.addEventListener('click', e=>{
-  if (e.target.classList && e.target.classList.contains('scrim')){ readCreate(); state.sheet=null; render(); return; }
+  if (e.target.classList && e.target.classList.contains('scrim')){ readCreate(); state.sheet=null; state.pwSheet=false; render(); return; }
   const el = e.target.closest('[data-act]');
   if (!el) return;
   const [act, a, b] = el.dataset.act.split(':');
@@ -1178,6 +1228,9 @@ document.addEventListener('click', e=>{
   if (act==='back'){ go('list'); return; }
   if (act==='reset'){ location.reload(); return; }
   if (act==='togglephone'){ state.phone = !state.phone; render(); window.scrollTo(0,0); return; }
+  if (act==='openpw'){ state.pwSheet = true; render(); return; }
+  if (act==='closepw'){ state.pwSheet = false; render(); return; }
+  if (act==='forgotpw'){ toast('ส่งลิงก์ตั้งรหัสผ่านใหม่แล้ว', 'เดโม: ของจริงส่งอีเมลพร้อมลิงก์ที่ใช้ได้ครั้งเดียว', 'good'); return; }
   if (act==='sheet'){ if(a==='create'){ state.sheet='create'; } else { readCreate(); state.sheet=null; } render(); return; }
   if (act==='additem'){ readCreate(); newT.items.push({name:'',spec:'',qty:'',unit:'ชิ้น'}); render(); return; }
   if (act==='rmitem'){ readCreate(); newT.items.splice(+a,1); render(); return; }
@@ -1225,6 +1278,16 @@ document.addEventListener('click', e=>{
 });
 
 document.addEventListener('input', e=>{
+  if (e.target.dataset.pw === 'new'){
+    const v = e.target.value;
+    const ok = [v.length>=8, /[a-zA-Z]/.test(v), /\d/.test(v)];
+    document.querySelectorAll('[data-pwrules] .req').forEach((el,i)=>{
+      const label = el.querySelector('span');
+      el.className = 'req ' + (ok[i]?'ok':'no');
+      el.innerHTML = (ok[i]?ICON.check:ICON.circle) + label.outerHTML;
+    });
+    return;
+  }
   const t = state.tenderId && tender(state.tenderId);
   if (!t) return;
   const d = state.draft[t.id];
@@ -1287,6 +1350,20 @@ document.addEventListener('submit', e=>{
   const f = e.target.closest('[data-act]');
   if (!f) return;
   const [act, a] = f.dataset.act.split(':');
+
+  if (act==='savepw'){
+    const val = k => (f.querySelector(`[data-pw="${k}"]`)||{}).value || '';
+    const cur = val('cur'), nw = val('new'), cf = val('confirm');
+    if (cur !== DEMO_TEMP_PW) return toast('รหัสผ่านเดิมไม่ถูกต้อง', `เดโมใช้ ${DEMO_TEMP_PW}`, 'crit');
+    if (nw.length < 8 || !/[a-zA-Z]/.test(nw) || !/\d/.test(nw))
+      return toast('รหัสผ่านใหม่ยังไม่ผ่านเกณฑ์', 'ยาว 8 ตัวขึ้นไป มีตัวอักษรและตัวเลข', 'crit');
+    if (nw === cur) return toast('รหัสใหม่ซ้ำกับรหัสเดิม', 'ตั้งรหัสที่ต่างจากที่ได้รับมา', 'crit');
+    if (nw !== cf) return toast('รหัสผ่านไม่ตรงกัน', 'กรอกรหัสใหม่ให้ตรงกันทั้งสองช่อง', 'crit');
+    state.pwChanged[state.userId] = true;
+    state.pwSheet = false;
+    toast('เปลี่ยนรหัสผ่านแล้ว', 'ครั้งต่อไปให้เข้าสู่ระบบด้วยรหัสใหม่', 'good');
+    render(); return;
+  }
 
   if (act==='submitbid'){
     const t = tender(a), d = state.draft[t.id];

@@ -22,6 +22,10 @@ create table public.profiles (
   full_name   text not null,
   position    text,
   supplier_id uuid references public.suppliers(id) on delete restrict,
+  -- ฝ่ายจัดซื้อเป็นคนตั้งรหัสผ่านครั้งแรกให้ จึงต้องบังคับให้เจ้าของบัญชีเปลี่ยนก่อนใช้งาน
+  -- ไม่ใช่แค่กันที่หน้าจอ แต่ submit_bid()/create_tender() จะปฏิเสธด้วยถ้ายังไม่เปลี่ยน
+  must_change_password boolean not null default true,
+  password_changed_at  timestamptz,
   created_at  timestamptz not null default now(),
   -- ผู้ขายต้องสังกัดบริษัท ฝ่ายจัดซื้อต้องไม่สังกัด
   constraint profile_company_rule check (

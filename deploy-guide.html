@@ -202,6 +202,9 @@ npm install">คัดลอก</button></div>
       <li>คลิกที่ผู้ใช้แต่ละคน คัดลอก <b>UID</b> (เลขยาวๆ) เก็บไว้ทั้ง 4 ค่า</li>
     </ol>
     <div class="note crit"><b>ถ้าไม่ติ๊ก Auto Confirm</b> จะเข้าสู่ระบบไม่ได้และขึ้นว่าอีเมลหรือรหัสผ่านไม่ถูกต้อง ซึ่งเป็นปัญหาที่เจอบ่อยที่สุด</div>
+    <div class="note warn"><b>รหัสที่คุณตั้งให้ ผู้ขายต้องเปลี่ยนเองก่อนใช้งาน</b> — ระบบบังคับให้เปลี่ยนตอนเข้าครั้งแรก
+      และฝั่งฐานข้อมูลจะปฏิเสธการยื่นราคาจนกว่าจะเปลี่ยน เพราะถ้าไม่บังคับ ฝ่ายจัดซื้อที่รู้รหัสจะเข้าไปยื่นราคาแทนผู้ขายได้
+      · <b>ส่งรหัสชั่วคราวทางโทรศัพท์หรือ LINE</b> อย่าส่งในอีเมลฉบับเดียวกับลิงก์เข้าระบบ</div>
   </div></div>
 
   <div class="step"><span class="n">6</span><div class="body">
@@ -310,6 +313,7 @@ git push -u origin main">คัดลอก</button></div>
     <p class="muted">ติ๊กไปทีละข้อ ข้อที่ 6–7 สำคัญที่สุด เพราะถ้าพลาดจะเสียส่วนต่างราคาทุกงาน</p>
     <div class="check">
       <label><input type="checkbox"><span>เข้าสู่ระบบได้ทั้งบัญชีฝ่ายจัดซื้อและซัพพลายเออร์</span></label>
+      <label><input type="checkbox"><span>เข้าครั้งแรกต้องเจอหน้าบังคับเปลี่ยนรหัสผ่าน และเปลี่ยนแล้วเข้าใช้งานได้</span></label>
       <label><input type="checkbox"><span>ซัพพลายเออร์เห็นเฉพาะงานที่ถูกเชิญ ไม่เห็นงานอื่น</span></label>
       <label><input type="checkbox"><span>หยอดราคาในงานเปิดราคาได้ และเปิดอีกเบราว์เซอร์เป็นผู้ขายรายที่สองแล้วเห็นราคาขึ้นเรียลไทม์</span></label>
       <label><input type="checkbox"><span>งานปิดราคา: หยอดซ้ำได้หลายครั้ง และขึ้นสถานะค้อนถูกต้อง</span></label>
@@ -407,6 +411,9 @@ git push">คัดลอก</button></div>
       <tr><td>ราคาไม่ขึ้นเรียลไทม์</td><td>ตาราง bids ยังไม่เข้า publication</td><td>รันบรรทัดท้ายของ <code>01_schema.sql</code> ที่เป็น <code>alter publication</code> ซ้ำอีกครั้ง</td></tr>
       <tr><td>Cloudflare build fail หา package.json ไม่เจอ</td><td>ไม่ได้ตั้ง Root directory</td><td>Settings → Builds → Root directory ใส่ <code>app</code> แล้ว Retry deployment</td></tr>
       <tr><td>เว็บขึ้นหน้าขาว</td><td>ลืมใส่ env vars ใน Cloudflare</td><td>ใส่ 2 ตัวแล้วกด Retry deployment (ต้อง build ใหม่ค่าจึงมีผล)</td></tr>
+      <tr><td>ผู้ขายบอกว่าติดหน้าให้เปลี่ยนรหัส ผ่านไปไม่ได้</td><td>รหัสเดิมที่กรอกไม่ตรงกับที่ตั้งไว้</td><td>ตั้งรหัสใหม่ให้ที่ Authentication → คลิกผู้ใช้ → Reset password แล้วแจ้งเขาอีกครั้ง</td></tr>
+      <tr><td>อยากบังคับให้ใครเปลี่ยนรหัสใหม่อีกครั้ง</td><td>เช่น สงสัยว่ารหัสรั่ว</td><td>SQL Editor รัน <code>update profiles set must_change_password = true where id = 'UUID';</code></td></tr>
+      <tr><td>กดลืมรหัสผ่านแล้วไม่ได้อีเมล</td><td>โควตาอีเมลของ Supabase ฟรีจำกัดไม่กี่ฉบับต่อชั่วโมง</td><td>รอแล้วลองใหม่ หรือต่อ SMTP ภายนอก (Resend/Brevo) ที่ Auth → SMTP Settings</td></tr>
       <tr><td>ระบบใช้งานไม่ได้หลังหยุดใช้นานหลายวัน</td><td>โปรเจกต์ Supabase ฟรีถูก pause หลังไม่มีการใช้งาน 7 วัน</td><td>เข้า Supabase กด Restore project ใช้ได้ตามปกติ ถ้ามีคนใช้ทุกวันจะไม่โดน</td></tr>
     </tbody>
   </table></div>
