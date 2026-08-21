@@ -141,6 +141,7 @@ begin
   if now() < v_t.opens_at then raise exception 'ยังไม่ถึงเวลาเปิดรับราคา'; end if;
   if now() > v_t.closes_at then raise exception 'ปิดรับราคาแล้ว (%)', to_char(v_t.closes_at,'DD Mon YY HH24:MI'); end if;
   if v_t.awarded_bid_id is not null then raise exception 'ประกาศผลผู้ชนะแล้ว'; end if;
+  if v_t.cancelled_at is not null then raise exception 'ประกาศนี้ถูกยกเลิกแล้ว'; end if;
 
   select * into v_bid from public.bids where tender_id = p_tender and supplier_id = v_supplier;
   v_is_new := v_bid.id is null;
@@ -312,6 +313,7 @@ begin
   select * into v_t from public.tenders where id = p_tender;
   if v_t.id is null then raise exception 'ไม่พบประกาศนี้'; end if;
   if v_t.awarded_bid_id is not null then raise exception 'ประกาศผลผู้ชนะแล้ว แนบเอกสารเพิ่มไม่ได้'; end if;
+  if v_t.cancelled_at is not null then raise exception 'ประกาศนี้ถูกยกเลิกแล้ว'; end if;
 
   select * into v_bid from public.bids
    where tender_id = p_tender and supplier_id = public.my_supplier_id();

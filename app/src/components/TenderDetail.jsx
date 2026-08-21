@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react'
-import { getTender, subscribeTender, unsealTender, awardBid, declineInvite, attachBidFiles, uploadBidFiles } from '../lib/api'
+import { getTender, subscribeTender, unsealTender, awardBid, declineInvite, attachBidFiles, uploadBidFiles,
+         cancelTender, deleteTender } from '../lib/api'
+import { downloadCSV, tenderComparisonRows } from '../lib/csv'
 import { baht, num, stamp, statusOf, canSeePrices, clock, cdText, docsDueAt, DOCS_GRACE_DAYS } from '../lib/format'
 import { ICON, TypeChip, StatusChip, Countdown, DocList, Req, toast } from './bits'
 import { useState as useLocalState } from 'react'
@@ -42,6 +44,12 @@ export default function TenderDetail({ id, profile, onBack }) {
           </div>
           <h1>{t.title}</h1>
           <p className="muted">{t.description}</p>
+          {t.cancelled_at && (
+            <div className="rule" style={{ borderLeftColor: 'var(--crit)', background: 'var(--crit-wash)' }}>
+              <b>ประกาศนี้ถูกยกเลิกเมื่อ {stamp(t.cancelled_at)}</b><br />
+              เหตุผล: {t.cancel_reason || '—'}
+            </div>
+          )}
         </div>
         <div className="stack" style={{ gap: '.25rem', alignItems: 'flex-end', textAlign: 'right' }}>
           <span className="eyebrow">{st === 'live' ? 'เหลือเวลา' : 'เวลาปิดรับ'}</span>
@@ -205,6 +213,40 @@ export default function TenderDetail({ id, profile, onBack }) {
               {st === 'awarded' && (
                 <div className="rule"><b>ผู้ชนะ: {bids.find(b => b.id === t.awarded_bid_id)?.suppliers?.name}</b><br />
                   ประกาศผลเมื่อ {stamp(t.awarded_at)}</div>
+              )}
+
+              {canSee && bids.length > 0 && (
+                <button className="btn block" onClick={() => {
+                  downloadCSV(`${t.code}-เปรียบเทียบราคา`, tenderComparisonRows(t))
+                  toast('ดาวน์โหลดแล้ว', `${t.code}-เปรียบเทียบราคา.csv — เปิดด้วย Excel ได้เลย`, 'good')
+                }}>ดาวน์โหลดใบเปรียบเทียบ (CSV)</button>
+              )}
+
+              {!t.cancelled_at && st !== 'awarded' && (
+                <>
+                  <button className="btn block danger" onClick={async () => {
+                    const reason = window.prompt('เหตุผลการยกเลิกประกาศนี้ (ผู้ขายทุกรายจะเห็นข้อความนี้)')
+                    if (!reason) return
+                    try { await cancelTender(t.id, reason); toast('ยกเลิกประกาศแล้ว', t.code, 'good'); load() }
+                    catch (e) { toast('ยกเลิกไม่สำเร็จ', e.message, 'crit') }
+                  }}>ยกเลิกประกาศ</button>
+
+                  {t.bid_count === 0 && (
+                    <button className="btn block danger" onClick={async () => {
+                      if (!window.confirm(`ลบประกาศ ${t.code} ออกจากระบบถาวร?\n\nยังไม่มีใครยื่นราคา จึงลบได้ — การลบย้อนกลับไม่ได้`)) return
+                      try {
+                        await deleteTender(t.id, t.files)
+                        toast('ลบประกาศแล้ว', t.code, 'good')
+                        onBack()
+                      } catch (e) { toast('ลบไม่สำเร็จ', e.message, 'crit') }
+                    }}>ลบประกาศ (ยังไม่มีผู้ยื่นราคา)</button>
+                  )}
+                  <p className="dim">
+                    {t.bid_count === 0
+                      ? 'ลบได้เพราะยังไม่มีใบเสนอราคา — ถ้ามีแล้วระบบจะให้ยกเลิกเท่านั้น เพื่อเก็บหลักฐานไว้'
+                      : `มีใบเสนอราคาแล้ว ${t.bid_count} ราย จึงลบไม่ได้ ใช้ "ยกเลิกประกาศ" แทน ระบบจะเก็บทุกอย่างไว้พร้อมเหตุผล`}
+                  </p>
+                </>
               )}
             </div>
           )}

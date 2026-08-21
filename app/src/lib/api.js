@@ -190,6 +190,15 @@ export const declineInvite = id     => rpc('decline_invite', { p_tender: id })
 export const attachBidFiles = (tenderId, files) =>
   rpc('attach_bid_files', { p_tender: tenderId, p_files: files })
 export const createTender = payload => rpc('create_tender', { p: payload })
+export const cancelTender  = (id, reason) => rpc('cancel_tender', { p_tender: id, p_reason: reason })
+
+// ลบประกาศ: เอาไฟล์ TOR ออกจาก storage ก่อน แล้วค่อยลบข้อมูล
+// (ฐานข้อมูลลบแถวลูกให้เองด้วย cascade แต่ไฟล์ใน storage ไม่หายตาม)
+export async function deleteTender(id, files = []) {
+  const paths = files.map(f => f.file_path).filter(Boolean)
+  if (paths.length) await supabase.storage.from('tender-files').remove(paths)
+  return rpc('delete_tender', { p_tender: id })
+}
 
 // ============================ จัดการผู้ใช้ (ฝ่ายจัดซื้อ) ============================
 export async function adminListUsers() {

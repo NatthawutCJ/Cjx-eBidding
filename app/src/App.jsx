@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useState } from 'react'
 import { supabase } from './lib/supabase'
 import { getProfile, listTenders, listSuppliers, signOut } from './lib/api'
-import { statusOf } from './lib/format'
+import { statusOf, statusLabel } from './lib/format'
+import { downloadCSV, myBidRows } from './lib/csv'
 import { ICON, Toasts, toast } from './components/bits'
 import Login from './components/Login.jsx'
 import TenderList from './components/TenderList.jsx'
@@ -168,8 +169,16 @@ function MyBids({ tenders, profile, onOpen }) {
   const sum = rows.reduce((s, t) => s + Number(t.my_bid.total || 0), 0)
   return (
     <div className="page">
-      <div className="pagehead"><div className="grow stack" style={{ gap: '.2rem' }}>
-        <span className="eyebrow">ประวัติการเสนอราคา</span><h1>ราคาที่คุณยื่น</h1></div></div>
+      <div className="pagehead">
+        <div className="grow stack" style={{ gap: '.2rem' }}>
+          <span className="eyebrow">ประวัติการเสนอราคา</span><h1>ราคาที่คุณยื่น</h1></div>
+        {rows.length > 0 && (
+          <button className="btn" onClick={() => {
+            downloadCSV('ราคาที่ยื่นทั้งหมด', myBidRows(tenders, statusLabel))
+            toast('ดาวน์โหลดแล้ว', `ราคาที่ยื่นทั้งหมด.csv — ${rows.length} รายการ`, 'good')
+          }}>ดาวน์โหลด CSV</button>
+        )}
+      </div>
       <div className="grid g4">
         <div className="stat"><span className="eyebrow">ยื่นทั้งหมด</span><span className="v">{rows.length}</span></div>
         <div className="stat"><span className="eyebrow">ชนะ</span><span className="v" style={{ color: 'var(--good)' }}>{wins}</span></div>

@@ -24,10 +24,14 @@ export function cdText(ms) {
 
 // ---------- สถานะงาน / กติกาการมองเห็น (ต้องตรงกับ RLS ฝั่ง Postgres) ----------
 export const statusOf = t =>
-  t.awarded_bid_id ? 'awarded'
+  t.cancelled_at ? 'cancelled'
+  : t.awarded_bid_id ? 'awarded'
   : Date.now() > new Date(t.closes_at).getTime() ? 'closed'
   : Date.now() < new Date(t.opens_at).getTime() ? 'scheduled' : 'live'
 
+export const STATUS_LABEL = { live:'กำลังประมูล', closed:'ปิดรับราคา', awarded:'ประกาศผลแล้ว',
+  cancelled:'ยกเลิกแล้ว', scheduled:'ยังไม่เปิดรับ' }
+export const statusLabel = t => STATUS_LABEL[statusOf(t)] || statusOf(t)
 export const closingSoon = t => statusOf(t) === 'live' && new Date(t.closes_at) - Date.now() < 60 * MIN
 export const canSeePrices = t => t.type === 'open' || !!t.unsealed_at
 

@@ -57,6 +57,7 @@ export const TypeChip = ({ t }) => t.type === 'sealed'
 
 export function StatusChip({ t }) {
   const st = statusOf(t)
+  if (st === 'cancelled') return <span className="chip crit">ยกเลิกแล้ว</span>
   if (st === 'awarded') return <span className="chip flat">ประกาศผลแล้ว</span>
   if (st === 'closed') return t.type === 'sealed' && !t.unsealed_at
     ? <span className="chip warn">รอเปิดซอง</span>

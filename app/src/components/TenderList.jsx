@@ -1,5 +1,6 @@
-import { baht, num, stamp, statusOf, closingSoon } from '../lib/format'
-import { ICON, TypeChip, StatusChip, HammerChip, Countdown } from './bits'
+import { baht, num, stamp, statusOf, closingSoon, statusLabel } from '../lib/format'
+import { ICON, TypeChip, StatusChip, HammerChip, Countdown, toast } from './bits'
+import { downloadCSV, tenderListRows } from '../lib/csv'
 
 export function TenderRow({ t, profile, onOpen }) {
   const st = statusOf(t)
@@ -44,7 +45,15 @@ export default function TenderList({ tenders, profile, onOpen, onCreate }) {
             {!isBuyer && ' — ยื่นราคาก่อนหมดเวลาเพื่อเข้าร่วมพิจารณา'}
           </p>
         </div>
-        {isBuyer && <button className="btn primary" onClick={onCreate}>{ICON.plus} สร้างประกาศ</button>}
+        <div className="row" style={{ gap: '.5rem' }}>
+          {tenders.length > 0 && (
+            <button className="btn" onClick={() => {
+              downloadCSV('รายการประมูลทั้งหมด', tenderListRows(tenders, statusLabel))
+              toast('ดาวน์โหลดแล้ว', `รายการประมูลทั้งหมด.csv — ${tenders.length} รายการ`, 'good')
+            }}>ดาวน์โหลด CSV</button>
+          )}
+          {isBuyer && <button className="btn primary" onClick={onCreate}>{ICON.plus} สร้างประกาศ</button>}
+        </div>
       </div>
 
       <div className="card">
