@@ -16,6 +16,7 @@
   --font-d:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text","IBM Plex Sans Thai",system-ui,sans-serif;
   --font-b:-apple-system,BlinkMacSystemFont,"SF Pro Text","IBM Plex Sans Thai",system-ui,sans-serif;
   --font-m:ui-monospace,"SF Mono",SFMono-Regular,Menlo,"IBM Plex Mono",monospace;
+  --font-n:-apple-system,BlinkMacSystemFont,"SF Pro Text","SF Pro Display","IBM Plex Sans Thai",system-ui,sans-serif;
 }
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
   --ground:#0a0f19; --surface:#111726; --surface-2:#182031; --surface-3:#212a3d;
@@ -52,19 +53,19 @@ code{font-family:var(--font-m);font-size:.88em;background:var(--surface-2);paddi
 .eyebrow{font-size:.68rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3)}
 .dim{color:var(--ink-3);font-size:.86rem}
 .muted{color:var(--ink-2)}
-.num{font-family:var(--font-m);font-variant-numeric:tabular-nums}
+.num{font-family:var(--font-n);font-variant-numeric:tabular-nums}
 
 /* ---- phase ---- */
 .phase{display:flex;flex-direction:column;gap:.9rem}
 .phasehead{display:flex;align-items:baseline;gap:.6rem;flex-wrap:wrap;padding-bottom:.5rem;border-bottom:2px solid var(--accent-line)}
-.phasehead .tag{font-family:var(--font-m);font-size:.72rem;font-weight:600;color:var(--accent);background:var(--accent-wash);
+.phasehead .tag{font-family:var(--font-n);font-size:.72rem;font-weight:600;color:var(--accent);background:var(--accent-wash);
   border:1px solid var(--accent-line);padding:.14rem .5rem;border-radius:999px}
 
 /* ---- step ---- */
 .step{display:grid;grid-template-columns:auto 1fr;gap:.9rem;background:var(--surface);border:1px solid var(--line);
   border-radius:12px;padding:1rem;box-shadow:var(--shadow-1)}
 .step > .n{width:28px;height:28px;border-radius:9px;background:var(--accent);color:#fff;display:grid;place-items:center;
-  font-family:var(--font-m);font-size:.82rem;font-weight:600;flex:none}
+  font-family:var(--font-n);font-size:.82rem;font-weight:600;flex:none}
 :root[data-theme="dark"] .step > .n,:root:not([data-theme="light"]) .step > .n{color:#0a1633}
 @media (prefers-color-scheme: light){:root:not([data-theme="dark"]) .step > .n{color:#fff}}
 .step .body{min-width:0;display:flex;flex-direction:column;gap:.6rem}
@@ -93,7 +94,7 @@ code{font-family:var(--font-m);font-size:.88em;background:var(--surface-2);paddi
 .kv{display:grid;grid-template-columns:minmax(0,auto) minmax(0,1fr);gap:.35rem .8rem;font-size:.9rem;background:var(--surface-2);
   border:1px solid var(--line);border-radius:8px;padding:.7rem .8rem}
 .kv dt{color:var(--ink-3);overflow-wrap:anywhere}
-.kv dd{margin:0;font-family:var(--font-m);font-size:.85rem;overflow-wrap:anywhere}
+.kv dd{margin:0;font-family:var(--font-n);font-size:.85rem;overflow-wrap:anywhere}
 @media (max-width:560px){.kv{grid-template-columns:1fr;gap:.1rem}.kv dd{margin-bottom:.45rem}}
 
 /* ---- checklist ---- */
@@ -503,7 +504,9 @@ git push">คัดลอก</button></div>
     <tbody>
       <tr><td>ขึ้นว่า “ยังไม่ได้ตั้งค่า VITE_SUPABASE_URL”</td><td>ไม่มีไฟล์ .env หรือชื่อตัวแปรผิด</td><td>ตรวจว่าไฟล์ชื่อ <code>.env</code> อยู่ในโฟลเดอร์ <code>app</code> แล้วปิด <code>npm run dev</code> เปิดใหม่</td></tr>
       <tr><td>เข้าสู่ระบบไม่ได้ บอกว่าอีเมลหรือรหัสผ่านไม่ถูกต้อง</td><td>ตอนสร้างผู้ใช้ไม่ได้ติ๊ก Auto Confirm</td><td>Authentication → คลิกผู้ใช้ → Confirm email หรือลบแล้วสร้างใหม่ให้ติ๊กด้วย</td></tr>
-      <tr><td>เข้าสู่ระบบผ่าน แต่ขึ้นว่าโหลดข้อมูลผู้ใช้ไม่ได้</td><td>ยังไม่มีแถวใน <code>profiles</code></td><td>รัน <code>05_seed.sql</code> หรือเพิ่มแถวใน Table Editor ให้ UUID ตรงกับผู้ใช้</td></tr>
+      <tr><td>สร้างบัญชีใหม่แล้วล็อกอินไม่ได้ ขึ้น <code>Cannot coerce the result to a single JSON object</code></td>
+        <td>บัญชีนั้นยังไม่มีแถวใน <code>profiles</code> ระบบจึงไม่รู้ว่าเป็นใคร บริษัทไหน</td>
+        <td>รัน <code>11_link_users.sql</code> ครั้งเดียว แล้วผูกบัญชีจากเมนู <b>ผู้ใช้และผู้ขาย → บัญชีที่ยังไม่ได้ผูก</b> (ไม่ต้องแตะ SQL อีก)</td></tr>
       <tr><td>ซัพพลายเออร์เห็นรายการงานว่างเปล่า</td><td>ยังไม่ได้เชิญบริษัทนั้นเข้างาน</td><td>ล็อกอินเป็นฝ่ายจัดซื้อ สร้างประกาศแล้วติ๊กเชิญบริษัทนั้น</td></tr>
       <tr><td>อัปโหลดไฟล์ขึ้น error violates row-level security</td><td>ยังไม่รัน <code>04_storage.sql</code></td><td>รันไฟล์นั้นใน SQL Editor แล้วลองใหม่</td></tr>
       <tr><td>ราคาไม่ขึ้นเรียลไทม์</td><td>ตาราง bids ยังไม่เข้า publication</td><td>รันบรรทัดท้ายของ <code>01_schema.sql</code> ที่เป็น <code>alter publication</code> ซ้ำอีกครั้ง</td></tr>

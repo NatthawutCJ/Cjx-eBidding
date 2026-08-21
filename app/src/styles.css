@@ -19,6 +19,7 @@
   --font-d:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text","IBM Plex Sans Thai",system-ui,sans-serif;
   --font-b:-apple-system,BlinkMacSystemFont,"SF Pro Text","SF Pro Display","IBM Plex Sans Thai",system-ui,sans-serif;
   --font-m:ui-monospace,"SF Mono",SFMono-Regular,Menlo,"IBM Plex Mono",monospace;
+  --font-n:-apple-system,BlinkMacSystemFont,"SF Pro Text","SF Pro Display","IBM Plex Sans Thai",system-ui,sans-serif;
 }
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
@@ -61,7 +62,7 @@ button,input,select,textarea{font:inherit;color:inherit}
 svg{width:16px;height:16px;flex:none;fill:none;stroke:currentColor;stroke-width:1.8;vertical-align:-3px}
 .seg b svg{width:17px;height:17px}
 .rank svg{width:13px;height:13px}
-.num{font-family:var(--font-m);font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.num{font-family:var(--font-n);font-variant-numeric:tabular-nums;letter-spacing:-.02em}
 .eyebrow{font-size:.68rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3)}
 .muted{color:var(--ink-2)}
 .dim{color:var(--ink-3);font-size:.82rem}
@@ -120,7 +121,7 @@ textarea{min-height:76px;resize:vertical}
 .nav button:hover{background:var(--surface-2);color:var(--ink)}
 .nav button[aria-current="page"]{background:var(--accent-wash);color:var(--accent-2);font-weight:600}
 .nav svg{width:16px;height:16px;flex:none;stroke:currentColor;fill:none;stroke-width:1.6}
-.nav .badge{margin-left:auto;font-family:var(--font-m);font-size:.72rem;background:var(--surface-3);color:var(--ink-2);padding:0 .35rem;border-radius:4px}
+.nav .badge{margin-left:auto;font-family:var(--font-n);font-size:.72rem;background:var(--surface-3);color:var(--ink-2);padding:0 .35rem;border-radius:4px}
 .whoami{margin-top:auto;border-top:1px solid var(--line);padding-top:.8rem;display:flex;flex-direction:column;gap:.5rem}
 .avatar{width:30px;height:30px;border-radius:50%;background:var(--surface-3);display:grid;place-items:center;font-family:var(--font-d);font-weight:600;font-size:.8rem;flex:none;color:var(--ink-2)}
 .main{min-width:0;display:flex;flex-direction:column}
@@ -160,7 +161,7 @@ textarea{min-height:76px;resize:vertical}
 
 /* stat tile */
 .stat{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:.8rem .9rem;display:flex;flex-direction:column;gap:.35rem}
-.stat .v{font-family:var(--font-m);font-variant-numeric:tabular-nums;font-size:1.5rem;font-weight:600;line-height:1.1;letter-spacing:-.03em}
+.stat .v{font-family:var(--font-n);font-variant-numeric:tabular-nums;font-size:1.5rem;font-weight:600;line-height:1.1;letter-spacing:-.03em}
 .meter{height:5px;border-radius:3px;background:var(--surface-3);overflow:hidden}
 .meter i{display:block;height:100%;border-radius:3px;background:var(--accent)}
 .meter i.good{background:var(--good)}
@@ -179,7 +180,7 @@ textarea{min-height:76px;resize:vertical}
 .titem .t{flex:1;min-width:0;display:flex;flex-direction:column;gap:.3rem}
 .titem .t b{font-family:var(--font-d);font-weight:600;font-size:.97rem}
 .titem .r{display:flex;flex-direction:column;align-items:flex-end;gap:.3rem;flex:none}
-.cd{font-family:var(--font-m);font-variant-numeric:tabular-nums;font-size:.86rem;font-weight:500}
+.cd{font-family:var(--font-n);font-variant-numeric:tabular-nums;font-size:.86rem;font-weight:500}
 .cd.soon{color:var(--warn)}
 .cd.over{color:var(--ink-3)}
 
@@ -189,14 +190,14 @@ textarea{min-height:76px;resize:vertical}
 .bid:last-child{border-bottom:0}
 .bid.me{background:var(--accent-wash)}
 .bid.win{background:var(--good-wash)}
-.rank{width:26px;height:26px;border-radius:7px;display:grid;place-items:center;font-family:var(--font-m);font-size:.8rem;font-weight:600;
+.rank{width:26px;height:26px;border-radius:7px;display:grid;place-items:center;font-family:var(--font-n);font-size:.8rem;font-weight:600;
   background:var(--surface-3);color:var(--ink-2);flex:none}
 .bid.win .rank{background:var(--good);color:#fff}
 :root[data-theme="dark"] .bid.win .rank,:root:not([data-theme="light"]) .bid.win .rank{color:#0a1633}
 .bid .who{min-width:0}
 .bid .who b{display:block;font-weight:600;font-size:.92rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .bid .amt{text-align:right;flex:none}
-.bid .amt .v{font-family:var(--font-m);font-variant-numeric:tabular-nums;font-weight:600;font-size:1rem;letter-spacing:-.02em}
+.bid .amt .v{font-family:var(--font-n);font-variant-numeric:tabular-nums;font-weight:600;font-size:1rem;letter-spacing:-.02em}
 .bid .amt .d{font-size:.72rem;color:var(--ink-3)}
 .bid .amt .d.up{color:var(--crit)}
 .bid .amt .d.down{color:var(--good)}
@@ -210,12 +211,12 @@ th{font-size:.74rem;font-weight:600;letter-spacing:.04em;text-transform:uppercas
 td.r,th.r{text-align:right}
 tbody tr:last-child td{border-bottom:0}
 tfoot td{font-weight:600;border-top:1px solid var(--line-strong);border-bottom:0}
-td.mono,tfoot td.mono{font-family:var(--font-m);font-variant-numeric:tabular-nums}
+td.mono,tfoot td.mono{font-family:var(--font-n);font-variant-numeric:tabular-nums}
 
 /* docs */
 .docs{display:flex;flex-direction:column;gap:.4rem}
 .doc{display:flex;align-items:center;gap:.6rem;padding:.45rem .55rem;border:1px solid var(--line);border-radius:var(--r-s);background:var(--surface)}
-.ext{font-family:var(--font-m);font-size:.66rem;font-weight:600;padding:.15rem .3rem;border-radius:4px;background:var(--surface-3);color:var(--ink-2);flex:none;text-transform:uppercase}
+.ext{font-family:var(--font-n);font-size:.66rem;font-weight:600;padding:.15rem .3rem;border-radius:4px;background:var(--surface-3);color:var(--ink-2);flex:none;text-transform:uppercase}
 .doc .n{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.86rem}
 .drop{border:1px dashed var(--line-strong);border-radius:var(--r-s);padding:.9rem;text-align:center;background:var(--surface-2);cursor:pointer;display:block}
 .drop:hover{border-color:var(--accent);background:var(--accent-wash)}
@@ -229,7 +230,7 @@ td.mono,tfoot td.mono{font-family:var(--font-m);font-variant-numeric:tabular-num
 .rule b{color:var(--ink)}
 .feed{display:flex;flex-direction:column;gap:.7rem;max-height:340px;overflow-y:auto}
 .ev{display:grid;grid-template-columns:auto 1fr;gap:.6rem;font-size:.85rem}
-.ev time{font-family:var(--font-m);font-size:.74rem;color:var(--ink-3);white-space:nowrap}
+.ev time{font-family:var(--font-n);font-size:.74rem;color:var(--ink-3);white-space:nowrap}
 
 /* login */
 .login{min-height:100vh;display:grid;place-items:center;padding:1.5rem .9rem;background:

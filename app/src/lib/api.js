@@ -62,8 +62,10 @@ export async function getProfile(passedUser) {
   const { data, error } = await supabase
     .from('profiles')
     .select('id, role, full_name, position, supplier_id, must_change_password, password_changed_at, suppliers(id, code, name)')
-    .eq('id', user.id).single()
+    .eq('id', user.id).maybeSingle()
   if (error) throw error
+  // บัญชีที่สร้างใน Authentication แล้วแต่ยังไม่ได้ผูกบริษัท (ไม่มีแถวใน profiles)
+  if (!data) return { unlinked: true, id: user.id, email: user.email }
   return { ...data, email: user.email, org: data.suppliers?.name || 'ฝ่ายจัดซื้อกลาง' }
 }
 
@@ -210,6 +212,25 @@ export const adminSetSupplierPassword = (targetId, password) =>
   rpc('admin_set_supplier_password', { p_target: targetId, p_password: password })
 export const adminSetMustChange = (targetId, value) =>
   rpc('admin_set_must_change', { p_target: targetId, p_value: value })
+
+export async function adminPendingAccounts() {
+  const { data, error } = await supabase.rpc('admin_pending_accounts')
+  if (error) throw new Error(error.message)
+  return data || []
+}
+export const adminLinkUser = ({ email, fullName, role = 'supplier', supplierId = null, position = 'ผู้ติดต่อ' }) =>
+  rpc('admin_link_user', { p_email: email, p_full_name: fullName, p_role: role,
+                           p_supplier_id: supplierId, p_position: position })
+export const adminUnlinkUser = targetId => rpc('admin_unlink_user', { p_target: targetId })
+
+export async function addSupplier({ code, name, taxId }) {
+  const { data, error } = await supabase.from('suppliers')
+    .insert({ code: code.trim(), name: name.trim(), tax_id: taxId?.trim() || null })
+    .select('id, code, name').single()
+  if (error) throw new Error(/duplicate|unique/i.test(error.message)
+    ? `รหัสผู้ขาย ${code} มีอยู่แล้ว ใช้รหัสอื่น` : error.message)
+  return data
+}
 
 // ============================ realtime ============================
 export function subscribeTender(id, onChange) {

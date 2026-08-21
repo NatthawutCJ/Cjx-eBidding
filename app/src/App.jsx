@@ -45,6 +45,9 @@ export default function App() {
   if (profile === undefined) return <><div className="login"><p className="dim">กำลังเข้าสู่ระบบ…</p></div><Toasts /></>
   if (!profile) return <><Login /><Toasts /></>
 
+  // บัญชีที่สร้างแล้วแต่ฝ่ายจัดซื้อยังไม่ได้ผูกกับบริษัท
+  if (profile.unlinked) return <><Unlinked profile={profile} /><Toasts /></>
+
   // ตั้งรหัสใหม่จากลิงก์อีเมล
   if (recovery) return <><ChangePassword mode="recovery" profile={profile}
     onDone={() => { setRecovery(false); loadProfile() }} /><Toasts /></>
@@ -158,6 +161,33 @@ function Shell({ profile }) {
         <CreateTender suppliers={suppliers} onClose={() => setSheet(null)}
                       onCreated={id => { setSheet(null); reload(); open(id) }} />
       )}
+    </div>
+  )
+}
+
+// ---------------- บัญชียังไม่ได้ผูกกับบริษัท ----------------
+function Unlinked({ profile }) {
+  return (
+    <div className="login">
+      <div className="loginbox">
+        <div className="row" style={{ gap: '.7rem' }}>
+          <img className="logo" src="/cjx-logo.png" alt="CJx" style={{ height: 52 }} />
+          <span><b style={{ fontFamily: 'var(--font-d)', fontSize: '1rem', display: 'block' }}>ระบบประมูลจัดซื้อ</b>
+            <span className="dim">Supplier e-Bidding Portal</span></span>
+        </div>
+        <div className="card pad stack">
+          <h1 style={{ fontSize: '1.15rem' }}>บัญชีนี้ยังไม่ได้เปิดใช้งาน</h1>
+          <div className="rule" style={{ borderLeftColor: 'var(--warn)', background: 'var(--warn-wash)' }}>
+            <b>{profile.email}</b><br />
+            เข้าสู่ระบบได้แล้ว แต่ยังไม่ได้ผูกกับบริษัทผู้ขาย จึงยังไม่เห็นงานประมูล
+          </div>
+          <p className="muted" style={{ fontSize: '.92rem' }}>
+            กรุณาแจ้งฝ่ายจัดซื้อให้ผูกบัญชีนี้กับบริษัทของท่าน (เมนู “ผู้ใช้และผู้ขาย” → บัญชีที่ยังไม่ได้ผูก)
+            แล้วเข้าสู่ระบบอีกครั้ง
+          </p>
+          <button className="btn block" onClick={() => signOut()}>ออกจากระบบ</button>
+        </div>
+      </div>
     </div>
   )
 }
