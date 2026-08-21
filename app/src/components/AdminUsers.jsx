@@ -17,6 +17,7 @@ export default function AdminUsers() {
   const [busy, setBusy] = useState('')
   const [issued, setIssued] = useState(null)   // { email, password }
   const [pending, setPending] = useState([])   // บัญชีที่ยังไม่ได้ผูก
+  const [sqlErr, setSqlErr] = useState('')     // ยังไม่ได้รัน 11_link_users.sql
   const [suppliers, setSuppliers] = useState([])
   const [link, setLink] = useState({})         // { [email]: { supplierId, fullName } }
   const [newSup, setNewSup] = useState({ code: '', name: '', taxId: '' })
@@ -24,7 +25,9 @@ export default function AdminUsers() {
   const load = () => {
     adminListUsers().then(setRows)
       .catch(e => { setRows([]); toast('โหลดรายชื่อผู้ใช้ไม่ได้', e.message, 'crit') })
-    adminPendingAccounts().then(setPending).catch(() => {})
+    adminPendingAccounts()
+      .then(d => { setPending(d); setSqlErr('') })
+      .catch(e => { setPending([]); setSqlErr(e.message || 'เรียกฟังก์ชันไม่สำเร็จ') })
     listSuppliers().then(setSuppliers).catch(() => {})
   }
   useEffect(() => { load() }, [])
@@ -109,11 +112,19 @@ export default function AdminUsers() {
       {/* ---------- บัญชีที่สร้างแล้วแต่ยังไม่ได้ผูกบริษัท ---------- */}
       <div className="card">
         <header><h3>บัญชีที่ยังไม่ได้ผูก</h3>
-          <span className={'chip ' + (pending.length ? 'warn' : 'flat')}>{pending.length}</span></header>
+          <span className={'chip ' + (sqlErr ? 'crit' : pending.length ? 'warn' : 'flat')}>
+            {sqlErr ? 'ยังไม่ได้ติดตั้ง' : pending.length}</span></header>
         <div className="body stack">
-          {pending.length === 0
-            ? <p className="dim">ไม่มีบัญชีค้างอยู่ — บัญชีที่สร้างใหม่ใน Supabase จะมาโผล่ที่นี่ให้กดผูกบริษัท</p>
-            : <div className="rule">บัญชีเหล่านี้เข้าสู่ระบบได้แล้ว แต่ยังไม่เห็นงานประมูลจนกว่าจะผูกกับบริษัท</div>}
+          {sqlErr
+            ? <div className="rule" style={{ borderLeftColor: 'var(--crit)', background: 'var(--crit-wash)' }}>
+                <b>ยังไม่ได้ติดตั้งฟังก์ชันผูกบัญชีในฐานข้อมูล</b><br />
+                เปิด Supabase → SQL Editor → วางไฟล์ <code>11_link_users.sql</code> แล้วกด Run
+                จากนั้นรีเฟรชหน้านี้ บัญชีที่สร้างใหม่จะมาโผล่ที่นี่<br />
+                <span className="dim">ข้อความจากฐานข้อมูล: {sqlErr}</span>
+              </div>
+            : pending.length === 0
+              ? <p className="dim">ไม่มีบัญชีค้างอยู่ — บัญชีที่สร้างใหม่ใน Supabase จะมาโผล่ที่นี่ให้กดผูกบริษัท</p>
+              : <div className="rule">บัญชีเหล่านี้เข้าสู่ระบบได้แล้ว แต่ยังไม่เห็นงานประมูลจนกว่าจะผูกกับบริษัท</div>}
           {pending.map(acc => (
             <div className="card pad stack" key={acc.id} style={{ gap: '.5rem', background: 'var(--surface-2)' }}>
               <div className="spread"><b style={{ fontSize: '.92rem' }}>{acc.email}</b>
