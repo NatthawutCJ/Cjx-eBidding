@@ -504,6 +504,9 @@ git push">คัดลอก</button></div>
     <tbody>
       <tr><td>ขึ้นว่า “ยังไม่ได้ตั้งค่า VITE_SUPABASE_URL”</td><td>ไม่มีไฟล์ .env หรือชื่อตัวแปรผิด</td><td>ตรวจว่าไฟล์ชื่อ <code>.env</code> อยู่ในโฟลเดอร์ <code>app</code> แล้วปิด <code>npm run dev</code> เปิดใหม่</td></tr>
       <tr><td>เข้าสู่ระบบไม่ได้ บอกว่าอีเมลหรือรหัสผ่านไม่ถูกต้อง</td><td>ตอนสร้างผู้ใช้ไม่ได้ติ๊ก Auto Confirm</td><td>Authentication → คลิกผู้ใช้ → Confirm email หรือลบแล้วสร้างใหม่ให้ติ๊กด้วย</td></tr>
+      <tr><td>กดยื่นราคาแล้วขึ้น <code>record "v_t" has no field "cancelled_at"</code></td>
+        <td>ยังไม่ได้รัน <code>10_manage_tender.sql</code> ตาราง <code>tenders</code> จึงไม่มีคอลัมน์ที่ <code>submit_bid</code> เรียกใช้</td>
+        <td>รัน <code>10_manage_tender.sql</code> แล้วลองยื่นอีกครั้ง — อยากรู้ว่าขาดไฟล์ไหนอีกให้รัน <code>13_verify_install.sql</code> ซึ่งไล่ตรวจให้ทั้งหมด</td></tr>
       <tr><td>ฝ่ายจัดซื้อเห็นช่องงบประมาณเป็น <code>——</code> และมีข้อความว่ายังไม่ได้รัน <code>12_hide_budget.sql</code></td>
         <td>เว็บเวอร์ชันใหม่อ่านงบจากตาราง <code>tender_internal</code> แต่ฐานข้อมูลยังเก็บงบไว้ที่เดิม</td>
         <td>รัน <code>12_hide_budget.sql</code> ครั้งเดียว (ย้ายค่าเดิมให้เอง ข้อมูลไม่หาย) แล้วรีเฟรช</td></tr>

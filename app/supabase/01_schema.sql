@@ -51,6 +51,9 @@ create table public.tenders (
   awarded_bid_id uuid,                                    -- FK เพิ่มท้ายไฟล์ (วนกับ bids)
   awarded_at     timestamptz,
   awarded_by     uuid references public.profiles(id),
+  cancelled_at   timestamptz,                             -- ยกเลิกประกาศ (เก็บประวัติไว้ ไม่ลบ)
+  cancelled_by   uuid references public.profiles(id),
+  cancel_reason  text,
   created_by     uuid not null references public.profiles(id),
   created_at     timestamptz not null default now(),
   constraint close_after_open check (closes_at > opens_at)
@@ -161,6 +164,7 @@ alter table public.tenders
 create or replace function public.tender_status(t public.tenders)
 returns text language sql stable as $$
   select case
+    when t.cancelled_at is not null   then 'cancelled'
     when t.awarded_bid_id is not null then 'awarded'
     when now() > t.closes_at          then 'closed'
     when now() < t.opens_at           then 'scheduled'
