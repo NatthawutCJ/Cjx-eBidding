@@ -546,7 +546,7 @@ function tenderRow(t){
         if (isBuyer()) return hammerChip(false);
         return hm.supplierId===state.userId ? hammerChip(true) : '';})()}</span>
       <b>${esc(t.title)}</b>
-      <span class="dim num">${t.code} · งบ ${baht(t.budget)} · ${t.items.length} รายการ · ${n} ใบเสนอราคา</span>
+      <span class="dim num">${t.code}${isBuyer()?' · งบ '+baht(t.budget):''} · ${t.items.length} รายการ · ${n} ใบเสนอราคา</span>
     </span>
     <span class="r">${cdHtml(t)}<span class="dim">ปิดรับ ${stamp(t.closesAt)}</span></span>
   </button>`;
@@ -636,8 +636,7 @@ function bidForm(t){
             <td class="r mono" data-linetotal="${it.id}">${p?baht2(p*it.qty):'—'}</td>
           </tr>`;}).join('')}
         </tbody>
-        <tfoot><tr><td colspan="3" class="r">ราคารวมทั้งสิ้น (ก่อน VAT)</td><td class="r mono" data-sum style="font-size:1.05rem">${sum?baht2(sum):'—'}</td></tr>
-        <tr><td colspan="3" class="r dim" style="font-weight:400">เทียบงบประมาณ ${baht(t.budget)}</td><td class="r mono dim" data-vsbudget>${sum?((sum-t.budget)/t.budget*100).toFixed(1)+'%':'—'}</td></tr></tfoot>
+        <tfoot><tr><td colspan="3" class="r">ราคารวมทั้งสิ้น (ก่อน VAT)</td><td class="r mono" data-sum style="font-size:1.05rem">${sum?baht2(sum):'—'}</td></tr></tfoot>
       </table></div>
 
       ${bidding ? `<div>
@@ -807,15 +806,16 @@ function boardCard(t){
 function statsHtml(t){
   const all = ranked(t.id), best = all.length?bidTotal(all[0]):0, canSee = canSeeRivalPrices(t, state.userId);
   return `
-    <div class="stat"><span class="eyebrow">งบประมาณ</span><span class="v">${baht(t.budget)}</span></div>
+    ${isBuyer()?`<div class="stat"><span class="eyebrow">งบประมาณ</span><span class="v">${baht(t.budget)}</span>
+      <span class="dim">${ICON.lock} ผู้ขายไม่เห็นตัวเลขนี้</span></div>`:''}
     <div class="stat"><span class="eyebrow">ผู้ถูกเชิญ / ยื่นแล้ว</span><span class="v">${all.length}/${t.invited.length}</span>
       <div class="meter"><i style="width:${Math.round(all.length/t.invited.length*100)}%"></i></div></div>
     <div class="stat"><span class="eyebrow">ราคาต่ำสุด</span>
       <span class="v">${canSee ? (all.length?baht(best):'—') : '฿ ——'}</span>
-      ${canSee&&all.length?`<div class="meter"><i class="${best<=t.budget?'good':'crit'}" style="width:${Math.min(100,Math.round(best/t.budget*100))}%"></i></div>`:`<span class="dim">${ICON.lock} ปิดไว้จนเปิดซอง</span>`}</div>
-    <div class="stat"><span class="eyebrow">ประหยัดจากงบ</span>
+      ${canSee&&all.length?(isBuyer()?`<div class="meter"><i class="${best<=t.budget?'good':'crit'}" style="width:${Math.min(100,Math.round(best/t.budget*100))}%"></i></div>`:''):`<span class="dim">${ICON.lock} ปิดไว้จนเปิดซอง</span>`}</div>
+    ${isBuyer()?`<div class="stat"><span class="eyebrow">ประหยัดจากงบ</span>
       <span class="v" style="color:${canSee&&all.length&&best<=t.budget?'var(--good)':'inherit'}">${canSee&&all.length?((1-best/t.budget)*100).toFixed(1)+'%':'——'}</span>
-      ${canSee?'':`<span class="dim">${ICON.lock} ปิดไว้จนเปิดซอง</span>`}</div>
+      ${canSee?'':`<span class="dim">${ICON.lock} ปิดไว้จนเปิดซอง</span>`}</div>`:''}
     ${isBuyer()&&t.target?(()=>{ const ham=visibleHammer(t);
       return `<div class="stat"><span class="eyebrow">ราคาคาดหวัง (ภายใน)</span><span class="v">${baht(t.target)}</span>
         ${!canSee?`<span class="dim">${ICON.lock} เทียบได้หลังเปิดซอง</span>`
@@ -1039,7 +1039,7 @@ function sheetCreate(){
         </div>
       </div>
       <div class="grid g2" style="gap:.7rem">
-        <label class="f"><span>งบประมาณ (บาท)</span><input type="number" min="0" data-nt="budget" class="num" value="${esc(newT.budget)}" placeholder="1000000" required></label>
+        <label class="f"><span>งบประมาณ (บาท) — เห็นเฉพาะฝ่ายจัดซื้อ</span><input type="number" min="0" data-nt="budget" class="num" value="${esc(newT.budget)}" placeholder="1000000" required></label>
         <label class="f"><span>ปิดรับราคา</span><input type="datetime-local" data-nt="closes" value="${esc(newT.closes)}" required></label>
       </div>
       <label class="f"><span>ราคาคาดหวัง (บาท) — เห็นเฉพาะฝ่ายจัดซื้อ</span>
@@ -1301,9 +1301,6 @@ document.addEventListener('input', e=>{
     if (cell) cell.textContent = d.lines[id] ? baht2(d.lines[id]*item.qty) : '—';
     const sum = total(t, d.lines);
     const sc = document.querySelector('[data-sum]'); if (sc) sc.textContent = sum ? baht2(sum) : '—';
-    const vb = document.querySelector('[data-vsbudget]');
-    if (vb){ const p = (sum-t.budget)/t.budget*100; vb.textContent = sum ? (p>0?'+':'')+p.toFixed(1)+'%' : '—';
-      vb.style.color = sum ? (p<=0?'var(--good)':'var(--crit)') : ''; }
   }
   if (e.target.hasAttribute('data-note')) d.note = e.target.value;
 });

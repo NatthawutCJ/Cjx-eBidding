@@ -79,14 +79,14 @@ begin
   end if;
 
   -- งานเปิดราคา
-  insert into public.tenders (code,title,description,type,budget,closes_at,created_by)
+  insert into public.tenders (code,title,description,type,closes_at,created_by)
   values (public.next_tender_code(),
           'ถุงหูหิ้วพลาสติก HDPE 6 ขนาด (ล็อตตัวอย่าง)',
           'ประมูลแบบเปิด — เห็นราคาคู่แข่งเรียลไทม์ ปรับราคาได้จนหมดเวลา',
-          'open', 1850000, now() + interval '2 days', v_buyer)
+          'open', now() + interval '2 days', v_buyer)
   returning id into v_open;
 
-  insert into public.tender_internal (tender_id, target_price) values (v_open, 1100000);
+  insert into public.tender_internal (tender_id, budget, target_price) values (v_open, 1850000, 1100000);
   insert into public.tender_items (tender_id,name,spec,qty,unit,sort) values
     (v_open,'ถุงหูหิ้ว HDPE 6x11 นิ้ว','หนา 0.020 มม.',12000,'กก.',0),
     (v_open,'ถุงหูหิ้ว HDPE 9x18 นิ้ว','หนา 0.025 มม.',9000,'กก.',1),
@@ -101,14 +101,14 @@ begin
     values (v_open, v_buyer, 'publish', 'ประกาศเชิญประมูลใหม่ (ข้อมูลตัวอย่าง)');
 
   -- งานปิดราคา
-  insert into public.tenders (code,title,description,type,budget,closes_at,created_by)
+  insert into public.tenders (code,title,description,type,closes_at,created_by)
   values (public.next_tender_code(),
           'ข้าวหอมมะลิ 100% ถุง 5 กก. (ล็อตตัวอย่าง)',
           'ประมูลแบบปิดซอง — ปรับราคาได้จนหมดเวลา ไม่มีใครเห็นราคาของกัน เปิดซองพร้อมกันทีเดียว',
-          'sealed', 4200000, now() + interval '3 days', v_buyer)
+          'sealed', now() + interval '3 days', v_buyer)
   returning id into v_sealed;
 
-  insert into public.tender_internal (tender_id, target_price) values (v_sealed, 3980000);
+  insert into public.tender_internal (tender_id, budget, target_price) values (v_sealed, 4200000, 3980000);
   insert into public.tender_items (tender_id,name,spec,qty,unit,sort) values
     (v_sealed,'ข้าวหอมมะลิ 100% ชั้น 1','ถุงสุญญากาศ 5 กก.',24000,'ถุง',0),
     (v_sealed,'ข้าวหอมมะลิผสม 70%','ถุง 5 กก. พิมพ์แบรนด์ร่วม',18000,'ถุง',1);

@@ -12,7 +12,7 @@ function tempPassword() {
   return `CJx-${body}-${pick(d)}${pick(d)}${pick(d)}`
 }
 
-export default function AdminUsers() {
+export default function AdminUsers({ profile }) {
   const [rows, setRows] = useState(null)
   const [busy, setBusy] = useState('')
   const [issued, setIssued] = useState(null)   // { email, password }
@@ -21,6 +21,8 @@ export default function AdminUsers() {
   const [suppliers, setSuppliers] = useState([])
   const [link, setLink] = useState({})         // { [email]: { supplierId, fullName } }
   const [newSup, setNewSup] = useState({ code: '', name: '', taxId: '' })
+
+  const isBuyerRole = acc => (link[acc.email]?.role || 'supplier') === 'buyer'
 
   const load = () => {
     adminListUsers().then(setRows)
@@ -34,11 +36,22 @@ export default function AdminUsers() {
 
   async function doLink(acc) {
     const cfg = link[acc.email] || {}
-    if (!cfg.supplierId) return toast('เลือกบริษัทก่อน', 'บัญชีผู้ขายต้องผูกกับบริษัท', 'crit')
+    const role = cfg.role || 'supplier'
+    if (role === 'supplier' && !cfg.supplierId) {
+      return toast('เลือกบริษัทก่อน', 'บัญชีผู้ขายต้องผูกกับบริษัท', 'crit')
+    }
     setBusy(acc.id)
     try {
-      await adminLinkUser({ email: acc.email, fullName: cfg.fullName || '', supplierId: cfg.supplierId })
-      toast('ผูกบัญชีแล้ว', `${acc.email} เข้าใช้งานได้ทันที`, 'good')
+      await adminLinkUser({
+        email: acc.email,
+        fullName: cfg.fullName || '',
+        role,
+        // ฝ่ายจัดซื้อไม่สังกัดบริษัทผู้ขาย ฐานข้อมูลจะปฏิเสธถ้าส่งมาด้วย
+        supplierId: role === 'buyer' ? null : cfg.supplierId,
+        position: cfg.position?.trim() || (role === 'buyer' ? 'ฝ่ายจัดซื้อ' : 'ผู้ติดต่อ'),
+      })
+      toast(role === 'buyer' ? 'เพิ่มสิทธิฝ่ายจัดซื้อแล้ว' : 'ผูกบัญชีแล้ว',
+            role === 'buyer' ? `${acc.email} ดูแลระบบได้เต็มสิทธิ` : `${acc.email} เข้าใช้งานได้ทันที`, 'good')
       load()
     } catch (e) { toast('ผูกบัญชีไม่สำเร็จ', e.message, 'crit') }
     finally { setBusy('') }
@@ -130,19 +143,37 @@ export default function AdminUsers() {
               <div className="spread"><b style={{ fontSize: '.92rem' }}>{acc.email}</b>
                 <span className="dim">สร้าง {stamp(acc.created_at)}</span></div>
               <div className="grid g2" style={{ gap: '.5rem' }}>
-                <label className="f"><span>ชื่อผู้ติดต่อ</span>
+                <label className="f"><span>ประเภทบัญชี</span>
+                  <select value={link[acc.email]?.role || 'supplier'}
+                          onChange={e => setLink({ ...link, [acc.email]: { ...link[acc.email], role: e.target.value } })}>
+                    <option value="supplier">ซัพพลายเออร์ (ยื่นราคา)</option>
+                    <option value="buyer">ฝ่ายจัดซื้อ (ดูแลระบบ)</option>
+                  </select></label>
+                <label className="f"><span>{isBuyerRole(acc) ? 'ชื่อ-นามสกุล' : 'ชื่อผู้ติดต่อ'}</span>
                   <input type="text" placeholder={acc.email.split('@')[0]}
                          value={link[acc.email]?.fullName || ''}
                          onChange={e => setLink({ ...link, [acc.email]: { ...link[acc.email], fullName: e.target.value } })} /></label>
-                <label className="f"><span>บริษัทผู้ขาย</span>
-                  <select value={link[acc.email]?.supplierId || ''}
-                          onChange={e => setLink({ ...link, [acc.email]: { ...link[acc.email], supplierId: e.target.value } })}>
-                    <option value="">— เลือกบริษัท —</option>
-                    {suppliers.map(s => <option key={s.id} value={s.id}>{s.name} ({s.code})</option>)}
-                  </select></label>
+                {isBuyerRole(acc)
+                  ? <label className="f"><span>ตำแหน่ง</span>
+                      <input type="text" placeholder="เช่น จัดซื้อกลาง / ผู้ดูแลระบบ"
+                             value={link[acc.email]?.position || ''}
+                             onChange={e => setLink({ ...link, [acc.email]: { ...link[acc.email], position: e.target.value } })} /></label>
+                  : <label className="f"><span>บริษัทผู้ขาย</span>
+                      <select value={link[acc.email]?.supplierId || ''}
+                              onChange={e => setLink({ ...link, [acc.email]: { ...link[acc.email], supplierId: e.target.value } })}>
+                        <option value="">— เลือกบริษัท —</option>
+                        {suppliers.map(s => <option key={s.id} value={s.id}>{s.name} ({s.code})</option>)}
+                      </select></label>}
               </div>
+              {isBuyerRole(acc) && (
+                <div className="rule" style={{ borderLeftColor: 'var(--warn)', background: 'var(--warn-wash)' }}>
+                  <b>สิทธิเต็ม</b> — สร้างและยกเลิกประกาศ เปิดซอง อนุมัติผู้ชนะ เห็นงบประมาณและราคาคาดหวังทุกงาน
+                  ตั้งรหัสผ่านผู้ขาย และผูกบัญชีใหม่ได้ ให้เฉพาะคนในทีมจัดซื้อเท่านั้น
+                </div>
+              )}
               <button className="btn primary" disabled={busy === acc.id} onClick={() => doLink(acc)}>
-                {busy === acc.id ? 'กำลังผูก…' : 'ผูกบัญชีกับบริษัท'}
+                {busy === acc.id ? 'กำลังผูก…'
+                  : isBuyerRole(acc) ? 'ให้สิทธิฝ่ายจัดซื้อ' : 'ผูกบัญชีกับบริษัท'}
               </button>
             </div>
           ))}
@@ -209,7 +240,20 @@ export default function AdminUsers() {
                       finally { setBusy('') }
                     }}>ถอนการผูก</button>
                   </>
-                ) : <span className="dim">บัญชีผู้ดูแล — ตั้งรหัสจาก SQL เท่านั้น</span>}
+                ) : u.id === profile?.id ? (
+                  <span className="dim">บัญชีของคุณ — ตั้งรหัสได้ที่ปุ่ม “เปลี่ยนรหัสผ่าน” มุมซ้ายล่าง</span>
+                ) : (
+                  <>
+                    <span className="dim">ฝ่ายจัดซื้อ — ลืมรหัสให้ใช้ไฟล์ 06_reset_password.sql</span>
+                    <button className="btn ghost sm danger" disabled={busy === u.id} onClick={async () => {
+                      if (!window.confirm(`ถอนสิทธิฝ่ายจัดซื้อของ ${u.email}?\n\nบัญชียังอยู่ แต่จะเข้าใช้งานไม่ได้จนผูกใหม่`)) return
+                      setBusy(u.id)
+                      try { await adminUnlinkUser(u.id); toast('ถอนสิทธิแล้ว', u.email, 'good'); load() }
+                      catch (e) { toast('ถอนสิทธิไม่สำเร็จ', e.message, 'crit') }
+                      finally { setBusy('') }
+                    }}>ถอนสิทธิ</button>
+                  </>
+                )}
               </span>
             </div>
           ))}
@@ -220,7 +264,8 @@ export default function AdminUsers() {
         <span className="eyebrow">ทำอย่างอื่นที่ Supabase Dashboard</span>
         <ul style={{ margin: 0, paddingLeft: '1.2rem', color: 'var(--ink-2)', fontSize: '.9rem', display: 'flex', flexDirection: 'column', gap: '.3rem' }}>
           <li><b>เพิ่มผู้ใช้ใหม่</b> — Authentication → Users → Add user (ใส่อีเมล + รหัส + ติ๊ก Auto Confirm)
-            แล้วกลับมาผูกบริษัทที่การ์ด “บัญชีที่ยังไม่ได้ผูก” ด้านบน — ไม่ต้องแตะ SQL</li>
+            แล้วกลับมาที่การ์ด “บัญชีที่ยังไม่ได้ผูก” ด้านบน เลือกประเภทบัญชีเป็น
+            <b> ซัพพลายเออร์</b> หรือ <b>ฝ่ายจัดซื้อ</b> แล้วกดผูก — ไม่ต้องแตะ SQL</li>
           <li><b>ตั้งรหัสบัญชีฝ่ายจัดซื้อ</b> — ใช้ไฟล์ <code>06_reset_password.sql</code> (ป้องกันไม่ให้ผู้ดูแลตั้งรหัสให้กันเอง)</li>
         </ul>
       </div>

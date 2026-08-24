@@ -141,8 +141,6 @@ export default function BidForm({ t, profile, onDone }) {
             <tfoot>
               <tr><td colSpan="3" className="r">ราคารวมทั้งสิ้น (ก่อน VAT)</td>
                   <td className="r mono" style={{ fontSize: '1.05rem' }}>{total ? baht2(total) : '—'}</td></tr>
-              <tr><td colSpan="3" className="r dim" style={{ fontWeight: 400 }}>เทียบงบประมาณ {baht(t.budget)}</td>
-                  <td className="r mono dim">{total ? ((total - t.budget) / t.budget * 100).toFixed(1) + '%' : '—'}</td></tr>
             </tfoot>
           </table>
         </div>

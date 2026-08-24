@@ -70,8 +70,9 @@ export async function getProfile(passedUser) {
 }
 
 // ============================ tenders ============================
+// ไม่มี budget ในนี้ — งบประมาณอยู่ตาราง tender_internal ที่ผู้ขายอ่านไม่ได้
 const TENDER_COLS = `
-  id, code, title, description, type, budget, currency,
+  id, code, title, description, type, currency,
   opens_at, closes_at, unsealed_at, awarded_bid_id, awarded_at, created_at,
   tender_items(id, name, spec, qty, unit, sort),
   tender_invites(supplier_id, declined_at)`
@@ -83,17 +84,21 @@ export async function listTenders(supplierId) {
   if (error) throw error
   const rows = data || []
 
-  const [counts, hammers, myBids] = await Promise.all([
+  const [counts, hammers, myBids, internal] = await Promise.all([
     Promise.all(rows.map(t => supabase.rpc('tender_bid_count', { p_tender: t.id }))),
     Promise.all(rows.map(t => supabase.rpc('hammer_holder', { p_tender: t.id }))),
     supplierId
       ? supabase.from('bids').select('id, tender_id, total').eq('supplier_id', supplierId)
       : Promise.resolve({ data: [] }),
+    // ผู้ขายจะได้ 0 แถวจาก RLS งบจึงเป็น null ในหน้าจอฝั่งผู้ขาย
+    supabase.from('tender_internal').select('tender_id, budget'),
   ])
   const mine = Object.fromEntries((myBids.data || []).map(b => [b.tender_id, b]))
+  const budgets = Object.fromEntries((internal.data || []).map(r => [r.tender_id, r.budget]))
 
   return rows.map((t, i) => ({
     ...t,
+    budget: budgets[t.id] ?? null,
     items: (t.tender_items || []).sort((a, b) => a.sort - b.sort),
     events: (t.tender_events || []).sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).slice(0, 8),
     bid_count: counts[i].data ?? 0,
@@ -124,7 +129,7 @@ export async function getTender(id) {
     supabase.rpc('hammer_holder', { p_tender: id }),
     supabase.rpc('my_target_status', { p_tender: id }),
     supabase.rpc('my_hammer_state', { p_tender: id }),
-    supabase.from('tender_internal').select('target_price').eq('tender_id', id).maybeSingle(),
+    supabase.from('tender_internal').select('budget, target_price').eq('tender_id', id).maybeSingle(),
   ])
   if (t.error) throw t.error
   return {
@@ -138,6 +143,7 @@ export async function getTender(id) {
     hammer_supplier_id: hammer.data ?? null,
     my_target_met: myTarget.data ?? null,      // true/false/null — ไม่มีตัวเลขเป้าติดมา
     my_hammer_state: myHammer.data ?? null,    // 'mine' | 'other' | 'none' | null
+    budget: internal.data?.budget ?? null,               // null สำหรับผู้ขาย (RLS)
     target_price: internal.data?.target_price ?? null,   // null สำหรับผู้ขาย (RLS)
   }
 }

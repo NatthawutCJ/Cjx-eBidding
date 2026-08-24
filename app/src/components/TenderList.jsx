@@ -19,7 +19,7 @@ export function TenderRow({ t, profile, onOpen }) {
         </span>
         <b>{t.title}</b>
         <span className="dim num">
-          {t.code} · งบ {baht(t.budget)} · {t.items.length} รายการ · {t.bid_count} ใบเสนอราคา
+          {t.code}{t.budget != null && ' · งบ ' + baht(t.budget)} · {t.items.length} รายการ · {t.bid_count} ใบเสนอราคา
         </span>
       </span>
       <span className="r">

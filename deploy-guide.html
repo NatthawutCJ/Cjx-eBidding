@@ -504,6 +504,12 @@ git push">คัดลอก</button></div>
     <tbody>
       <tr><td>ขึ้นว่า “ยังไม่ได้ตั้งค่า VITE_SUPABASE_URL”</td><td>ไม่มีไฟล์ .env หรือชื่อตัวแปรผิด</td><td>ตรวจว่าไฟล์ชื่อ <code>.env</code> อยู่ในโฟลเดอร์ <code>app</code> แล้วปิด <code>npm run dev</code> เปิดใหม่</td></tr>
       <tr><td>เข้าสู่ระบบไม่ได้ บอกว่าอีเมลหรือรหัสผ่านไม่ถูกต้อง</td><td>ตอนสร้างผู้ใช้ไม่ได้ติ๊ก Auto Confirm</td><td>Authentication → คลิกผู้ใช้ → Confirm email หรือลบแล้วสร้างใหม่ให้ติ๊กด้วย</td></tr>
+      <tr><td>ฝ่ายจัดซื้อเห็นช่องงบประมาณเป็น <code>——</code> และมีข้อความว่ายังไม่ได้รัน <code>12_hide_budget.sql</code></td>
+        <td>เว็บเวอร์ชันใหม่อ่านงบจากตาราง <code>tender_internal</code> แต่ฐานข้อมูลยังเก็บงบไว้ที่เดิม</td>
+        <td>รัน <code>12_hide_budget.sql</code> ครั้งเดียว (ย้ายค่าเดิมให้เอง ข้อมูลไม่หาย) แล้วรีเฟรช</td></tr>
+      <tr><td>รายการประมูลหายทั้งหน้า หลังรัน <code>12_hide_budget.sql</code></td>
+        <td>รัน SQL ก่อนที่เว็บใหม่จะขึ้น เว็บเก่ายังขอคอลัมน์ <code>tenders.budget</code> ที่ถูกลบไปแล้ว</td>
+        <td>ลำดับที่ถูกคือ <b>push โค้ดให้ Cloudflare build เสร็จก่อน แล้วจึงรัน SQL</b> — ถ้าพลาดไปแล้วให้ push โค้ดใหม่ แล้วรอ build เสร็จ ข้อมูลไม่หาย</td></tr>
       <tr><td>สร้างบัญชีใหม่แล้วล็อกอินไม่ได้ ขึ้น <code>Cannot coerce the result to a single JSON object</code></td>
         <td>บัญชีนั้นยังไม่มีแถวใน <code>profiles</code> ระบบจึงไม่รู้ว่าเป็นใคร บริษัทไหน</td>
         <td>รัน <code>11_link_users.sql</code> ครั้งเดียว แล้วผูกบัญชีจากเมนู <b>ผู้ใช้และผู้ขาย → บัญชีที่ยังไม่ได้ผูก</b> (ไม่ต้องแตะ SQL อีก)</td></tr>

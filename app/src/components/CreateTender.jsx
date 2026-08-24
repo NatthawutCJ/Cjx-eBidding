@@ -67,7 +67,7 @@ export default function CreateTender({ suppliers, onClose, onCreated }) {
           </div>
 
           <div className="grid g2" style={{ gap: '.7rem' }}>
-            <label className="f"><span>งบประมาณ (บาท)</span>
+            <label className="f"><span>งบประมาณ (บาท) — เห็นเฉพาะฝ่ายจัดซื้อ</span>
               <input type="number" min="0" className="num" required value={f.budget}
                      onChange={e => set('budget', e.target.value)} placeholder="1000000" /></label>
             <label className="f"><span>ปิดรับราคา</span>

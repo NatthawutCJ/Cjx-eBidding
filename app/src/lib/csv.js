@@ -33,7 +33,7 @@ export function tenderComparisonRows(t) {
   rows.push(['เลขที่ประกาศ', t.code])
   rows.push(['ชื่องาน', t.title])
   rows.push(['ประเภท', t.type === 'sealed' ? 'ปิดราคา' : 'เปิดราคา'])
-  rows.push(['งบประมาณ', t.budget])
+  if (t.budget != null) rows.push(['งบประมาณ', t.budget])
   if (t.target_price != null) rows.push(['ราคาคาดหวัง (ภายใน)', t.target_price])
   rows.push(['ปิดรับราคา', d(t.closes_at)])
   if (t.unsealed_at) rows.push(['เปิดซอง', d(t.unsealed_at)])
@@ -53,7 +53,7 @@ export function tenderComparisonRows(t) {
   rows.push(['ราคารวม (บาท)', '', '', '', ...bids.map(b => b.total)])
   rows.push(['ส่วนต่างจากต่ำสุด', '', '', '',
     ...bids.map(b => (bids.length ? Number(b.total) - Number(bids[0].total) : 0))])
-  rows.push(['เทียบงบประมาณ (%)', '', '', '',
+  if (t.budget != null) rows.push(['เทียบงบประมาณ (%)', '', '', '',
     ...bids.map(b => (((Number(b.total) - t.budget) / t.budget) * 100).toFixed(2))])
   rows.push([])
   rows.push(['ผู้เสนอราคา', 'รหัสผู้ขาย', 'ยื่นเมื่อ', 'แก้ไข (ครั้ง)', 'จำนวนเอกสาร', 'หมายเหตุ'])
@@ -66,15 +66,17 @@ export function tenderComparisonRows(t) {
 
 // ---------- รายการประมูลทั้งหมด ----------
 export function tenderListRows(tenders, statusLabel) {
+  // ไฟล์ของผู้ขายจะไม่มีคอลัมน์งบประมาณเลย (RLS ไม่ส่งค่ามาให้ตั้งแต่ต้น)
+  const withBudget = tenders.some(t => t.budget != null)
   const rows = [[
-    'เลขที่ประกาศ', 'ชื่องาน', 'ประเภท', 'สถานะ', 'งบประมาณ',
+    'เลขที่ประกาศ', 'ชื่องาน', 'ประเภท', 'สถานะ', ...(withBudget ? ['งบประมาณ'] : []),
     'จำนวนรายการ', 'ผู้ถูกเชิญ', 'ใบเสนอราคา', 'ปิดรับราคา', 'สร้างเมื่อ',
   ]]
   tenders.forEach(t => rows.push([
     t.code, t.title,
     t.type === 'sealed' ? 'ปิดราคา' : 'เปิดราคา',
     statusLabel(t),
-    t.budget,
+    ...(withBudget ? [t.budget] : []),
     (t.items || []).length,
     (t.tender_invites || []).length,
     t.bid_count ?? '',

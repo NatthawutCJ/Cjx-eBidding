@@ -269,16 +269,20 @@ begin
   if (p->>'closes_at')::timestamptz <= now() then
     raise exception 'เวลาปิดรับต้องเป็นเวลาในอนาคต';
   end if;
+  if coalesce((p->>'budget')::numeric, 0) <= 0 then
+    raise exception 'ต้องระบุงบประมาณ';
+  end if;
 
   v_code := public.next_tender_code();
 
-  insert into public.tenders (code, title, description, type, budget, closes_at, created_by)
+  insert into public.tenders (code, title, description, type, closes_at, created_by)
   values (v_code, p->>'title', p->>'description', p->>'type',
-          (p->>'budget')::numeric, (p->>'closes_at')::timestamptz, auth.uid())
+          (p->>'closes_at')::timestamptz, auth.uid())
   returning id into v_id;
 
-  insert into public.tender_internal (tender_id, target_price)
-  values (v_id, nullif(p->>'target_price','')::numeric);
+  -- งบประมาณและราคาคาดหวังอยู่ในตารางของฝ่ายจัดซื้อ ผู้ขายอ่านไม่ได้
+  insert into public.tender_internal (tender_id, budget, target_price)
+  values (v_id, (p->>'budget')::numeric, nullif(p->>'target_price','')::numeric);
 
   insert into public.tender_items (tender_id, name, spec, qty, unit, sort)
   select v_id, i->>'name', i->>'spec', (i->>'qty')::numeric,

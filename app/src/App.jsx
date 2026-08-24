@@ -98,7 +98,7 @@ function Shell({ profile }) {
     body = <BuyerDashboard tenders={tenders} events={events} profile={profile}
              onOpen={open} onCreate={() => setSheet('create')} />
   } else if (view === 'users') {
-    body = <AdminUsers />
+    body = <AdminUsers profile={profile} />
   } else if (view === 'mybids') {
     body = <MyBids tenders={tenders} profile={profile} onOpen={open} />
   } else if (view === 'feed') {

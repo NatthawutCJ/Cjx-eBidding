@@ -79,13 +79,13 @@ create table public.profiles (
 );
 
 -- ---------- ประกาศเชิญประมูล ----------
+-- ไม่มีคอลัมน์ budget ในตารางนี้ — งบประมาณอยู่ใน tender_internal ที่ผู้ขายอ่านไม่ได้
 create table public.tenders (
   id             uuid primary key default gen_random_uuid(),
   code           text unique not null,                    -- RFQ_2026_08_001
   title          text not null,
   description    text,
   type           text not null check (type in ('sealed','open')),
-  budget         numeric(14,2) not null check (budget > 0),
   currency       text not null default 'THB',
   opens_at       timestamptz not null default now(),
   closes_at      timestamptz not null,
@@ -99,11 +99,12 @@ create table public.tenders (
   constraint close_after_open check (closes_at > opens_at)
 );
 
--- ---------- ราคาคาดหวัง: แยกตารางเพื่อให้ RLS กันผู้ขายได้เด็ดขาด ----------
+-- ---------- งบประมาณ + ราคาคาดหวัง: แยกตารางเพื่อให้ RLS กันผู้ขายได้เด็ดขาด ----------
 -- ถ้าเก็บเป็นคอลัมน์ใน tenders ผู้ขายที่ยิง API ตรงจะ select เอาไปได้
 -- (RLS กันได้ทั้งแถว แต่กันทีละคอลัมน์ไม่ได้) จึงต้องแยกออกมาเป็นตารางของฝ่ายจัดซื้อ
 create table public.tender_internal (
   tender_id     uuid primary key references public.tenders(id) on delete cascade,
+  budget        numeric(14,2) not null check (budget > 0),
   target_price  numeric(14,2) check (target_price > 0),
   internal_note text
 );
@@ -642,16 +643,20 @@ begin
   if (p->>'closes_at')::timestamptz <= now() then
     raise exception 'เวลาปิดรับต้องเป็นเวลาในอนาคต';
   end if;
+  if coalesce((p->>'budget')::numeric, 0) <= 0 then
+    raise exception 'ต้องระบุงบประมาณ';
+  end if;
 
   v_code := public.next_tender_code();
 
-  insert into public.tenders (code, title, description, type, budget, closes_at, created_by)
+  insert into public.tenders (code, title, description, type, closes_at, created_by)
   values (v_code, p->>'title', p->>'description', p->>'type',
-          (p->>'budget')::numeric, (p->>'closes_at')::timestamptz, auth.uid())
+          (p->>'closes_at')::timestamptz, auth.uid())
   returning id into v_id;
 
-  insert into public.tender_internal (tender_id, target_price)
-  values (v_id, nullif(p->>'target_price','')::numeric);
+  -- งบประมาณและราคาคาดหวังอยู่ในตารางของฝ่ายจัดซื้อ ผู้ขายอ่านไม่ได้
+  insert into public.tender_internal (tender_id, budget, target_price)
+  values (v_id, (p->>'budget')::numeric, nullif(p->>'target_price','')::numeric);
 
   insert into public.tender_items (tender_id, name, spec, qty, unit, sort)
   select v_id, i->>'name', i->>'spec', (i->>'qty')::numeric,

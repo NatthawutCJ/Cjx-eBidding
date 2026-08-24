@@ -26,6 +26,7 @@ export default function TenderDetail({ id, profile, onBack }) {
   const bids = [...t.bids].sort((a, b) => a.total - b.total)
   const best = bids.length ? Number(bids[0].total) : 0
   const hamId = t.hammer_supplier_id
+  const hasBudget = t.budget != null   // ฝ่ายจัดซื้อเท่านั้น — ผู้ขายได้ null มาจาก RLS
 
   const act = async (fn, okTitle, okText) => {
     try { await fn(); toast(okTitle, okText, 'good'); load() }
@@ -59,7 +60,14 @@ export default function TenderDetail({ id, profile, onBack }) {
       </div>
 
       <div className="grid g4">
-        <div className="stat"><span className="eyebrow">งบประมาณ</span><span className="v">{baht(t.budget)}</span></div>
+        {hasBudget ? (
+          <div className="stat"><span className="eyebrow">งบประมาณ</span><span className="v">{baht(t.budget)}</span>
+            <span className="dim">{ICON.lock} ผู้ขายไม่เห็นตัวเลขนี้</span></div>
+        ) : isBuyer && (
+          // ฝ่ายจัดซื้อต้องเห็นงบเสมอ ถ้าว่างแปลว่ายังไม่ได้ย้ายข้อมูลในฐานข้อมูล
+          <div className="stat"><span className="eyebrow">งบประมาณ</span><span className="v">——</span>
+            <span className="dim">ยังไม่ได้รัน 12_hide_budget.sql</span></div>
+        )}
         {isBuyer ? (
           <div className="stat"><span className="eyebrow">ผู้ถูกเชิญ / ยื่นแล้ว</span>
             <span className="v">{t.bid_count}/{t.tender_invites?.length ?? '—'}</span>
@@ -75,16 +83,18 @@ export default function TenderDetail({ id, profile, onBack }) {
         <div className="stat"><span className="eyebrow">ราคาต่ำสุด</span>
           <span className="v">{canSee ? (bids.length ? baht(best) : '—') : '฿ ——'}</span>
           {canSee && bids.length
-            ? <div className="meter"><i className={best <= t.budget ? 'good' : 'crit'}
-                style={{ width: `${Math.min(100, (best / t.budget) * 100)}%` }} /></div>
+            ? (hasBudget && <div className="meter"><i className={best <= t.budget ? 'good' : 'crit'}
+                style={{ width: `${Math.min(100, (best / t.budget) * 100)}%` }} /></div>)
             : <span className="dim">{ICON.lock} ปิดไว้จนเปิดซอง</span>}
         </div>
-        <div className="stat"><span className="eyebrow">ประหยัดจากงบ</span>
-          <span className="v" style={{ color: canSee && bids.length && best <= t.budget ? 'var(--good)' : 'inherit' }}>
-            {canSee && bids.length ? ((1 - best / t.budget) * 100).toFixed(1) + '%' : '——'}
-          </span>
-          {!canSee && <span className="dim">{ICON.lock} ปิดไว้จนเปิดซอง</span>}
-        </div>
+        {hasBudget && (
+          <div className="stat"><span className="eyebrow">ประหยัดจากงบ</span>
+            <span className="v" style={{ color: canSee && bids.length && best <= t.budget ? 'var(--good)' : 'inherit' }}>
+              {canSee && bids.length ? ((1 - best / t.budget) * 100).toFixed(1) + '%' : '——'}
+            </span>
+            {!canSee && <span className="dim">{ICON.lock} ปิดไว้จนเปิดซอง</span>}
+          </div>
+        )}
         {isBuyer && t.target_price != null && (
           <div className="stat"><span className="eyebrow">ราคาคาดหวัง (ภายใน)</span>
             <span className="v">{baht(t.target_price)}</span>
@@ -200,7 +210,7 @@ export default function TenderDetail({ id, profile, onBack }) {
                           onClick={() => act(() => awardBid(bids[0].id), 'อนุมัติผู้ชนะแล้ว', bids[0].suppliers?.name)}>
                     {hamId && ICON.gavel} อนุมัติผู้ชนะ — {bids[0].suppliers?.name}
                   </button>
-                  <p className="dim">ราคาต่ำสุด {baht(best)} · ประหยัดจากงบ {baht(t.budget - best)}
+                  <p className="dim">ราคาต่ำสุด {baht(best)}{hasBudget && ' · ประหยัดจากงบ ' + baht(t.budget - best)}
                     {t.target_price != null && (hamId ? ' · ถึงราคาคาดหวังแล้ว' : ' · ยังไม่ถึงราคาคาดหวัง')}</p>
                   {(bids[0].bid_files || []).length < t.required_docs.length && (
                     <div className="rule" style={{ borderLeftColor: 'var(--warn)', background: 'var(--warn-wash)' }}>

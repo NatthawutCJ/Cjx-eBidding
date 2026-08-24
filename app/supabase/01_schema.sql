@@ -35,13 +35,14 @@ create table public.profiles (
 );
 
 -- ---------- ประกาศเชิญประมูล ----------
+-- ไม่มีคอลัมน์ budget ในตารางนี้ — งบประมาณอยู่ใน tender_internal ที่ผู้ขายอ่านไม่ได้
+-- (RLS ปิดได้แค่ระดับแถว ไม่ใช่ระดับคอลัมน์ ถ้าเก็บไว้ที่นี่ผู้ขายจะอ่านงบเราได้)
 create table public.tenders (
   id             uuid primary key default gen_random_uuid(),
   code           text unique not null,                    -- RFQ_2026_08_001
   title          text not null,
   description    text,
   type           text not null check (type in ('sealed','open')),
-  budget         numeric(14,2) not null check (budget > 0),
   currency       text not null default 'THB',
   opens_at       timestamptz not null default now(),
   closes_at      timestamptz not null,
@@ -55,11 +56,12 @@ create table public.tenders (
   constraint close_after_open check (closes_at > opens_at)
 );
 
--- ---------- ราคาคาดหวัง: แยกตารางเพื่อให้ RLS กันผู้ขายได้เด็ดขาด ----------
+-- ---------- งบประมาณ + ราคาคาดหวัง: แยกตารางเพื่อให้ RLS กันผู้ขายได้เด็ดขาด ----------
 -- ถ้าเก็บเป็นคอลัมน์ใน tenders ผู้ขายที่ยิง API ตรงจะ select เอาไปได้
 -- (RLS กันได้ทั้งแถว แต่กันทีละคอลัมน์ไม่ได้) จึงต้องแยกออกมาเป็นตารางของฝ่ายจัดซื้อ
 create table public.tender_internal (
   tender_id     uuid primary key references public.tenders(id) on delete cascade,
+  budget        numeric(14,2) not null check (budget > 0),
   target_price  numeric(14,2) check (target_price > 0),
   internal_note text
 );
