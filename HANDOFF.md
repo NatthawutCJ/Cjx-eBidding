@@ -12,7 +12,7 @@
 
 - `[V]` `cd app && npm run build` ผ่าน — vite 5.4.21, 88 modules, `dist/assets/index-*.js` 441 kB (node v24.19.0 / npm 11.17.0)
 - `[V]` **ไม่มีชุดทดสอบในโปรเจกต์** — `package.json` มีแค่ `dev` / `build` / `preview` การตรวจงานทุกครั้งจึงต้องใช้ build + เปิดหน้าเว็บจริง
-- `[V]` โครงไฟล์: `app/src/` 16 ไฟล์ (~1,900 บรรทัด) · `app/supabase/` 14 ไฟล์ SQL (~2,500 บรรทัด)
+- `[V]` โครงไฟล์: `app/src/` 17 ไฟล์ (~1,900 บรรทัด) · `app/supabase/` 14 ไฟล์ SQL (~2,500 บรรทัด)
 - `[V]` `app/.env` ถูก ignore ที่ `app/.gitignore:3` — ไม่มีคีย์หลุดเข้า git (`git ls-files` เจอแค่ `.env.example`)
 - `[V]` **ฐานข้อมูลจริง** (ยิงผ่าน REST ด้วย anon key ตอนเขียนไฟล์นี้):
   - `tenders.budget` → ไม่มีแล้ว = รัน `12_hide_budget.sql` แล้ว ✅ (ผู้ขายอ่านงบไม่ได้)
