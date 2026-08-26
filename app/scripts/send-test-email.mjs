@@ -47,8 +47,9 @@ const SAMPLE = {
 }
 
 // ---------- ชิ้นส่วนที่ใช้ร่วมกัน ----------
-const BLUE = '#1E40AF', INK = '#141b2d', DIM = '#5b6478', LINE = '#e2e5ec'
-const WASH = '#eef2ff', SOFT = '#f7f8fa'
+// เหลือง = แถบหัวจดหมาย · เขียว = เส้นคาดและป้าย (สุ่มค่าจากไฟล์โลโก้: เขียว #45905 2 แดง #D14948)
+const YEL = '#E9C84A', GRN = '#42904E', INK = '#141b2d', DIM = '#5b6478', LINE = '#e2e5ec'
+const WASH = '#eef4ee', SOFT = '#f7f8fa'
 const FONT = "-apple-system,'Segoe UI',Roboto,'Helvetica Neue',Arial,'Noto Sans Thai',sans-serif"
 
 const esc = v => String(v).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]))
@@ -58,32 +59,43 @@ const chips = list => `
   <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
     ${list.map(([text, solid]) => `
     <td style="padding-right:6px"><table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
-      <td bgcolor="${solid ? BLUE : WASH}" style="border-radius:5px;padding:4px 9px;font-family:${FONT};
-          font-size:11px;font-weight:700;color:${solid ? '#ffffff' : BLUE};white-space:nowrap">${esc(text)}</td>
+      <td bgcolor="${solid ? GRN : WASH}" style="border-radius:5px;padding:4px 9px;font-family:${FONT};
+          font-size:11px;font-weight:700;color:${solid ? '#ffffff' : GRN};white-space:nowrap">${esc(text)}</td>
     </tr></table></td>`).join('')}
   </tr></table>`
 
 const eyebrow = t => `<div style="font-family:${FONT};font-size:11px;font-weight:700;color:${DIM};
   letter-spacing:.06em;text-transform:uppercase;padding:22px 0 8px">${esc(t)}</div>`
 
-const button = (label, href, kind = 'primary') => `
-  <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 8px 8px 0;display:inline-block">
-    <tr><td bgcolor="${kind === 'primary' ? BLUE : '#ffffff'}"
-        style="border-radius:8px;border:1px solid ${kind === 'primary' ? BLUE : LINE}">
-      <a href="${href}" style="display:inline-block;padding:12px 22px;font-family:${FONT};font-size:14px;
-         font-weight:600;color:${kind === 'primary' ? '#ffffff' : INK};text-decoration:none">${esc(label)}</a>
+// ปุ่มหลักเต็มความกว้างเพื่อให้กดง่ายบนมือถือ ปุ่มรองเป็นขอบบาง
+const button = (label, href, kind = 'primary') => kind === 'primary' ? `
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 10px">
+    <tr><td align="center" bgcolor="${YEL}" style="border-radius:8px">
+      <a href="${href}" style="display:block;padding:14px 20px;font-family:${FONT};font-size:15px;
+         font-weight:700;color:${INK};text-decoration:none">${esc(label)}</a>
+    </td></tr>
+  </table>` : `
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 4px">
+    <tr><td align="center" bgcolor="#ffffff" style="border-radius:8px;border:1px solid ${LINE}">
+      <a href="${href}" style="display:block;padding:12px 20px;font-family:${FONT};font-size:14px;
+         font-weight:600;color:${DIM};text-decoration:none">${esc(label)}</a>
     </td></tr>
   </table>`
 
 const rows = pairs => `
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" class="kv">
-  ${pairs.map(([k, v]) => `
-  <tr>
-    <td class="k" style="padding:7px 0;font-family:${FONT};font-size:13px;color:${DIM};width:150px;
-        vertical-align:top;border-bottom:1px solid ${LINE}">${esc(k)}</td>
-    <td class="v" style="padding:7px 0;font-family:${FONT};font-size:14px;color:${INK};
-        vertical-align:top;border-bottom:1px solid ${LINE}">${v}</td>
-  </tr>`).join('')}
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+         style="border:1px solid ${LINE};border-radius:8px;background:#fcfcfd">
+    <tr><td style="padding:6px 16px">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" class="kv">
+      ${pairs.map(([k, v], i) => `
+      <tr>
+        <td class="k" style="padding:9px 0;font-family:${FONT};font-size:13px;color:${DIM};width:150px;
+            vertical-align:top;${i ? `border-top:1px solid ${LINE}` : ''}">${esc(k)}</td>
+        <td class="v" style="padding:9px 0;font-family:${FONT};font-size:14px;color:${INK};
+            vertical-align:top;${i ? `border-top:1px solid ${LINE}` : ''}">${v}</td>
+      </tr>`).join('')}
+      </table>
+    </td></tr>
   </table>`
 
 // ตารางรายการที่ต้องเสนอราคา
@@ -123,11 +135,11 @@ const fileList = files => files.map(([kind, name, size]) => `
 
 const checklist = list => list.map(t => `
   <div style="font-family:${FONT};font-size:14px;color:${INK};padding:5px 0 5px 18px;
-       border-left:2px solid ${WASH}">${esc(t)}</div>`).join('')
+       border-left:2px solid ${GRN}">${esc(t)}</div>`).join('')
 
 const note = html => `
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:18px">
-    <tr><td bgcolor="${SOFT}" style="border-left:3px solid ${BLUE};border-radius:0 8px 8px 0;padding:12px 14px;
+    <tr><td bgcolor="${SOFT}" style="border-left:3px solid ${GRN};border-radius:0 8px 8px 0;padding:12px 14px;
         font-family:${FONT};font-size:13px;color:${DIM};line-height:1.75">${html}</td></tr>
   </table>`
 
@@ -157,7 +169,7 @@ const shell = (preheader, inner) => `<!doctype html>
  <tr><td align="center" style="padding:24px 12px">
   <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" class="wrap"
          style="width:600px;max-width:100%;background:#ffffff;border:1px solid ${LINE};border-radius:12px">
-   <tr><td style="padding:18px 28px;background:#ffffff;border-bottom:3px solid ${BLUE};border-radius:12px 12px 0 0">
+   <tr><td style="padding:18px 28px;background:${YEL};border-bottom:3px solid ${GRN};border-radius:12px 12px 0 0">
      <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
        <td style="padding-right:12px;vertical-align:middle">
          <img src="${APP}/cjx-logo.png" alt="CJx" height="36"
@@ -165,7 +177,7 @@ const shell = (preheader, inner) => `<!doctype html>
        </td>
        <td style="vertical-align:middle">
          <div style="font-family:${FONT};font-size:16px;font-weight:700;color:${INK}">ระบบประมูลจัดซื้อ CJx</div>
-         <div style="font-family:${FONT};font-size:12px;color:${DIM};padding-top:2px">Supplier e-Bidding Portal</div>
+         <div style="font-family:${FONT};font-size:12px;color:#6b5d1f;padding-top:2px">Supplier e-Bidding Portal</div>
        </td>
      </tr></table>
    </td></tr>
@@ -194,17 +206,17 @@ const welcome = d => ({
       <b>${esc(d.company)}</b> ได้รับการขึ้นทะเบียนเป็นผู้ขายของ CJx เรียบร้อยแล้ว
       ระบบนี้ใช้สำหรับรับประกาศเชิญประมูล เสนอราคา และส่งเอกสารประกอบ
     </div>
-    ${note(`<b style="color:${INK}">รหัสผ่านชั่วคราว</b> ฝ่ายจัดซื้อจะแจ้งท่านทางโทรศัพท์หรือ LINE
-      แยกจากอีเมลฉบับนี้ เพื่อความปลอดภัย และเมื่อเข้าระบบครั้งแรก
-      <b style="color:${INK}">ระบบจะให้ท่านตั้งรหัสผ่านใหม่ของท่านเองทันที</b> ฝ่ายจัดซื้อจะไม่ทราบรหัสใหม่นั้น`)}
-    ${eyebrow('ข้อมูลบัญชีของท่าน')}
+    <div style="font-family:${FONT};font-size:14px;color:${INK};line-height:1.75;padding:14px 0 20px">
+      <b>รหัสผ่านชั่วคราว</b> ฝ่ายจัดซื้อจะแจ้งท่านทางโทรศัพท์หรือ LINE แยกจากอีเมลฉบับนี้ เพื่อความปลอดภัย
+      และเมื่อเข้าระบบครั้งแรก <b>ระบบจะให้ท่านตั้งรหัสผ่านใหม่ของท่านเองทันที</b> ฝ่ายจัดซื้อจะไม่ทราบรหัสใหม่นั้น
+    </div>
     ${rows([
       ['รหัสผู้ขาย', esc(d.vendorCode)],
       ['อีเมลเข้าระบบ', esc(d.loginEmail)],
       ['รหัสผ่านชั่วคราว', 'แจ้งทางโทรศัพท์/LINE แยกจากอีเมลฉบับนี้'],
       ['ผู้ดูแลบัญชีของคุณ', esc(d.buyer)],
     ])}
-    <div style="padding-top:20px">${button('เข้าสู่ระบบครั้งแรก', APP)}</div>
+    <div style="padding-top:22px">${button('เข้าสู่ระบบครั้งแรก', APP)}</div>
     <div style="font-family:${FONT};font-size:13px;color:${DIM};line-height:1.75">
       หากรหัสชั่วคราวใช้ไม่ได้ หรือลืมรหัสภายหลัง กด <b style="color:${INK}">“ลืมรหัสผ่าน”</b>
       ที่หน้าเข้าสู่ระบบ ระบบจะส่งลิงก์ตั้งรหัสใหม่ให้ทางอีเมลนี้ ใช้ได้ครั้งเดียว
@@ -222,7 +234,7 @@ const invite = d => ({
   subject: `[เชิญประมูล] ${d.rfq} ${d.title} — ปิดรับ ${d.closesAt}`,
   html: shell(`${d.company} ได้รับเชิญเสนอราคา ปิดรับ ${d.closesAt}`, `
     ${chips([[d.type, true], [d.closesIn, false]])}
-    <div style="font-family:${FONT};font-size:12px;font-weight:700;color:${BLUE};
+    <div style="font-family:${FONT};font-size:12px;font-weight:700;color:${GRN};
         letter-spacing:.05em;padding:14px 0 2px">${esc(d.rfq)}</div>
     <div style="font-family:${FONT};font-size:21px;font-weight:700;color:${INK};padding-bottom:10px">
       ${esc(d.title)}</div>
