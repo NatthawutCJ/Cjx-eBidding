@@ -31,35 +31,105 @@ const SAMPLE = {
   title: 'กล่องกระดาษลูกฟูก 3 ชั้น — ล็อต ต.ค. 69',
   type: 'ปิดราคา',
   closesAt: '22 Aug 26 16:00',
+  closesIn: 'ปิดรับใน 3 วัน',
   unsealAt: '22 Aug 26 16:30',
+  validity: 'ไม่น้อยกว่า 30 วัน',
+  delivery: 'ศูนย์กระจายสินค้าบางบัวทอง',
   items: [
-    ['กล่องลูกฟูก 3 ชั้น 40×30×20 ซม. · พิมพ์ 1 สี', '8,000 ใบ'],
-    ['กล่องลูกฟูก 3 ชั้น 60×40×30 ซม. · พิมพ์ 1 สี', '4,000 ใบ'],
+    ['กล่องลูกฟูก 3 ชั้น 40×30×20 ซม.', 'พิมพ์ 1 สี โลโก้ตามแบบแนบ', '8,000 ใบ'],
+    ['กล่องลูกฟูก 3 ชั้น 60×40×30 ซม.', 'พิมพ์ 1 สี โลโก้ตามแบบแนบ', '4,000 ใบ'],
+  ],
+  buyerFiles: [
+    ['PDF',  'TOR_กล่องลูกฟูก_2609.pdf', '627 KB'],
+    ['XLSX', 'แบบฟอร์มใบเสนอราคา.xlsx', '72 KB'],
   ],
   docs: ['ใบเสนอราคาลงนาม (PDF)', 'หนังสือรับรองบริษัท', 'ภ.พ.20 / ทะเบียนภาษี'],
 }
 
 // ---------- ชิ้นส่วนที่ใช้ร่วมกัน ----------
 const BLUE = '#1E40AF', INK = '#141b2d', DIM = '#5b6478', LINE = '#e2e5ec'
+const WASH = '#eef2ff', SOFT = '#f7f8fa'
 const FONT = "-apple-system,'Segoe UI',Roboto,'Helvetica Neue',Arial,'Noto Sans Thai',sans-serif"
 
 const esc = v => String(v).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]))
 
-const button = (label, href) => `
-  <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:20px 0">
-    <tr><td bgcolor="${BLUE}" style="border-radius:8px">
-      <a href="${href}" style="display:inline-block;padding:13px 26px;font-family:${FONT};
-         font-size:15px;font-weight:600;color:#ffffff;text-decoration:none">${esc(label)}</a>
+// ป้ายเล็ก ๆ เรียงแนวนอน — ใช้ตารางแทน inline-block เพราะ Outlook ไม่จัดระยะให้
+const chips = list => `
+  <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
+    ${list.map(([text, solid]) => `
+    <td style="padding-right:6px"><table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
+      <td bgcolor="${solid ? BLUE : WASH}" style="border-radius:5px;padding:4px 9px;font-family:${FONT};
+          font-size:11px;font-weight:700;color:${solid ? '#ffffff' : BLUE};white-space:nowrap">${esc(text)}</td>
+    </tr></table></td>`).join('')}
+  </tr></table>`
+
+const eyebrow = t => `<div style="font-family:${FONT};font-size:11px;font-weight:700;color:${DIM};
+  letter-spacing:.06em;text-transform:uppercase;padding:22px 0 8px">${esc(t)}</div>`
+
+const button = (label, href, kind = 'primary') => `
+  <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 8px 8px 0;display:inline-block">
+    <tr><td bgcolor="${kind === 'primary' ? BLUE : '#ffffff'}"
+        style="border-radius:8px;border:1px solid ${kind === 'primary' ? BLUE : LINE}">
+      <a href="${href}" style="display:inline-block;padding:12px 22px;font-family:${FONT};font-size:14px;
+         font-weight:600;color:${kind === 'primary' ? '#ffffff' : INK};text-decoration:none">${esc(label)}</a>
     </td></tr>
   </table>`
 
-const rows = pairs => pairs.map(([k, v]) => `
+const rows = pairs => `
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" class="kv">
+  ${pairs.map(([k, v]) => `
   <tr>
     <td class="k" style="padding:7px 0;font-family:${FONT};font-size:13px;color:${DIM};width:150px;
         vertical-align:top;border-bottom:1px solid ${LINE}">${esc(k)}</td>
     <td class="v" style="padding:7px 0;font-family:${FONT};font-size:14px;color:${INK};
         vertical-align:top;border-bottom:1px solid ${LINE}">${v}</td>
-  </tr>`).join('')
+  </tr>`).join('')}
+  </table>`
+
+// ตารางรายการที่ต้องเสนอราคา
+const itemsTable = items => `
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+         style="border:1px solid ${LINE};border-radius:8px;border-collapse:separate">
+    <tr>
+      <td style="padding:9px 12px;background:${SOFT};font-family:${FONT};font-size:11px;font-weight:700;
+          color:${DIM};letter-spacing:.04em;border-bottom:1px solid ${LINE}">รายการ</td>
+      <td align="right" style="padding:9px 12px;background:${SOFT};font-family:${FONT};font-size:11px;
+          font-weight:700;color:${DIM};letter-spacing:.04em;border-bottom:1px solid ${LINE};
+          white-space:nowrap">จำนวน</td>
+    </tr>
+    ${items.map(([name, spec, qty], i) => `
+    <tr>
+      <td style="padding:10px 12px;font-family:${FONT};font-size:14px;color:${INK};
+          ${i ? `border-top:1px solid ${LINE}` : ''}">
+        ${esc(name)}<br><span style="font-size:12px;color:${DIM}">${esc(spec)}</span></td>
+      <td align="right" style="padding:10px 12px;font-family:${FONT};font-size:14px;font-weight:600;
+          color:${INK};white-space:nowrap;vertical-align:top;${i ? `border-top:1px solid ${LINE}` : ''}">
+        ${esc(qty)}</td>
+    </tr>`).join('')}
+  </table>`
+
+// ไฟล์แนบจากผู้ซื้อ — โชว์ชื่อไฟล์อย่างเดียว ไม่แนบไฟล์จริงมากับอีเมล
+const fileList = files => files.map(([kind, name, size]) => `
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+         style="margin-bottom:6px"><tr>
+    <td width="46" style="padding:9px 0 9px 10px;vertical-align:middle">
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
+        <td bgcolor="${SOFT}" style="border:1px solid ${LINE};border-radius:4px;padding:3px 6px;
+            font-family:${FONT};font-size:10px;font-weight:700;color:${DIM}">${esc(kind)}</td>
+      </tr></table></td>
+    <td style="padding:9px 10px 9px 8px;font-family:${FONT};font-size:13px;color:${INK};vertical-align:middle">
+      ${esc(name)} <span style="color:${DIM}">· ${esc(size)}</span></td>
+  </tr></table>`).join('')
+
+const checklist = list => list.map(t => `
+  <div style="font-family:${FONT};font-size:14px;color:${INK};padding:5px 0 5px 18px;
+       border-left:2px solid ${WASH}">${esc(t)}</div>`).join('')
+
+const note = html => `
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:18px">
+    <tr><td bgcolor="${SOFT}" style="border-left:3px solid ${BLUE};border-radius:0 8px 8px 0;padding:12px 14px;
+        font-family:${FONT};font-size:13px;color:${DIM};line-height:1.75">${html}</td></tr>
+  </table>`
 
 // preheader = ข้อความตัวอย่างที่โผล่ต่อจากหัวเรื่องในกล่องจดหมาย ซ่อนไม่ให้เห็นในตัวอีเมล
 const shell = (preheader, inner) => `<!doctype html>
@@ -99,7 +169,7 @@ const shell = (preheader, inner) => `<!doctype html>
        </td>
      </tr></table>
    </td></tr>
-   <tr><td style="padding:28px">${inner}</td></tr>
+   <tr><td style="padding:26px 28px 28px">${inner}</td></tr>
    <tr><td style="padding:16px 28px;border-top:1px solid ${LINE};background:#fafbfc;border-radius:0 0 12px 12px">
      <div style="font-family:${FONT};font-size:12px;color:${DIM};line-height:1.7">
        CJx <b>ไม่มีนโยบายเรียกเก็บค่าธรรมเนียม</b>ในการเข้าร่วมประมูล และ<b>ไม่เคยขอรหัสผ่าน</b>ของท่าน
@@ -117,59 +187,70 @@ const shell = (preheader, inner) => `<!doctype html>
 const welcome = d => ({
   subject: 'เชิญเปิดบัญชีผู้ขาย — ระบบประมูลจัดซื้อ CJx',
   html: shell(`${d.company} ได้รับการขึ้นทะเบียนเป็นผู้ขายของ CJx แล้ว`, `
-    <div style="font-family:${FONT};font-size:20px;font-weight:700;color:${INK};padding-bottom:12px">
+    <div style="font-family:${FONT};font-size:21px;font-weight:700;color:${INK};padding-bottom:10px">
       เปิดบัญชีเพื่อเข้าร่วมประมูลกับ CJx</div>
     <div style="font-family:${FONT};font-size:14px;color:${INK};line-height:1.75">
       สวัสดีครับ คุณ ${esc(d.contact)}<br><br>
       <b>${esc(d.company)}</b> ได้รับการขึ้นทะเบียนเป็นผู้ขายของ CJx เรียบร้อยแล้ว
       ระบบนี้ใช้สำหรับรับประกาศเชิญประมูล เสนอราคา และส่งเอกสารประกอบ
     </div>
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" class="kv" style="margin-top:18px">
-      ${rows([
-        ['รหัสผู้ขาย', esc(d.vendorCode)],
-        ['อีเมลเข้าระบบ', esc(d.loginEmail)],
-        ['รหัสผ่านชั่วคราว', 'แจ้งทางโทรศัพท์/LINE แยกจากอีเมลฉบับนี้'],
-        ['ผู้ดูแลบัญชีของคุณ', esc(d.buyer)],
-      ])}
-    </table>
-    ${button('เข้าสู่ระบบครั้งแรก', APP)}
-    <div style="font-family:${FONT};font-size:13px;color:${DIM};line-height:1.75;
-        border-left:3px solid ${BLUE};padding:2px 0 2px 12px">
-      เมื่อเข้าระบบครั้งแรก <b style="color:${INK}">ระบบจะให้ท่านตั้งรหัสผ่านใหม่ของท่านเองทันที</b>
-      ฝ่ายจัดซื้อจะไม่ทราบรหัสใหม่นั้น · ราคาที่ยื่นในงานประเภท “ปิดราคา” จะไม่มีผู้ใดเห็นจนถึงเวลาเปิดซอง
-      แต่ปรับราคาได้ไม่จำกัดจนหมดเวลา
-    </div>`),
+    ${note(`<b style="color:${INK}">รหัสผ่านชั่วคราว</b> ฝ่ายจัดซื้อจะแจ้งท่านทางโทรศัพท์หรือ LINE
+      แยกจากอีเมลฉบับนี้ เพื่อความปลอดภัย และเมื่อเข้าระบบครั้งแรก
+      <b style="color:${INK}">ระบบจะให้ท่านตั้งรหัสผ่านใหม่ของท่านเองทันที</b> ฝ่ายจัดซื้อจะไม่ทราบรหัสใหม่นั้น`)}
+    ${eyebrow('ข้อมูลบัญชีของท่าน')}
+    ${rows([
+      ['รหัสผู้ขาย', esc(d.vendorCode)],
+      ['อีเมลเข้าระบบ', esc(d.loginEmail)],
+      ['รหัสผ่านชั่วคราว', 'แจ้งทางโทรศัพท์/LINE แยกจากอีเมลฉบับนี้'],
+      ['ผู้ดูแลบัญชีของคุณ', esc(d.buyer)],
+    ])}
+    <div style="padding-top:20px">${button('เข้าสู่ระบบครั้งแรก', APP)}</div>
+    <div style="font-family:${FONT};font-size:13px;color:${DIM};line-height:1.75">
+      หากรหัสชั่วคราวใช้ไม่ได้ หรือลืมรหัสภายหลัง กด <b style="color:${INK}">“ลืมรหัสผ่าน”</b>
+      ที่หน้าเข้าสู่ระบบ ระบบจะส่งลิงก์ตั้งรหัสใหม่ให้ทางอีเมลนี้ ใช้ได้ครั้งเดียว
+    </div>
+    ${eyebrow('สิ่งที่ควรทราบ')}
+    ${checklist([
+      'หนึ่งบริษัทหนึ่งบัญชีหลัก และเพิ่มผู้ใช้ในบริษัทของท่านเองได้',
+      'งานประเภท “ปิดราคา” ไม่มีผู้ใดเห็นราคาของท่านจนถึงเวลาเปิดซอง แต่ปรับราคาได้ไม่จำกัดจนหมดเวลา',
+      'ท่านเห็นเฉพาะงานที่ได้รับเชิญ และเห็นเฉพาะใบเสนอราคาของบริษัทท่านเอง',
+    ])}`),
 })
 
 // ---------- ฉบับที่ 2: เชิญเข้าร่วมประมูล ----------
 const invite = d => ({
   subject: `[เชิญประมูล] ${d.rfq} ${d.title} — ปิดรับ ${d.closesAt}`,
   html: shell(`${d.company} ได้รับเชิญเสนอราคา ปิดรับ ${d.closesAt}`, `
-    <div style="font-family:${FONT};font-size:12px;font-weight:700;color:${BLUE};letter-spacing:.04em">
-      ประกาศเชิญประมูล · ${esc(d.type)}</div>
-    <div style="font-family:${FONT};font-size:20px;font-weight:700;color:${INK};padding:6px 0 4px">
+    ${chips([[d.type, true], [d.closesIn, false]])}
+    <div style="font-family:${FONT};font-size:12px;font-weight:700;color:${BLUE};
+        letter-spacing:.05em;padding:14px 0 2px">${esc(d.rfq)}</div>
+    <div style="font-family:${FONT};font-size:21px;font-weight:700;color:${INK};padding-bottom:10px">
       ${esc(d.title)}</div>
-    <div style="font-family:${FONT};font-size:13px;color:${DIM};padding-bottom:14px">${esc(d.rfq)}</div>
     <div style="font-family:${FONT};font-size:14px;color:${INK};line-height:1.75">
       CJx ขอเชิญ <b>${esc(d.company)}</b> เข้าร่วมเสนอราคาในงานจัดซื้อดังรายละเอียดด้านล่าง
       กรุณายื่นใบเสนอราคาผ่านระบบก่อนเวลาปิดรับ
     </div>
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" class="kv" style="margin-top:16px">
-      ${rows([
-        ['รูปแบบ', `${esc(d.type)} — ไม่มีผู้ใดเห็นราคาของกัน แต่ปรับราคาได้ไม่จำกัดจนหมดเวลา`],
-        ['ปิดรับราคา', `<b>${esc(d.closesAt)}</b> (ตามเวลาระบบ)`],
-        ['เปิดซอง', `${esc(d.unsealAt)} พร้อมกันทุกราย`],
-        ['รายการที่ต้องเสนอ', d.items.map(([n, q]) => `${esc(n)} — <b>${esc(q)}</b>`).join('<br>')],
-        ['เอกสารที่ต้องส่ง', `ภายใน 3 วันหลังปิดประมูล<br>${d.docs.map(esc).join('<br>')}`],
-      ])}
-    </table>
-    ${button('เข้าดูประกาศและยื่นราคา', APP)}
-    <div style="font-family:${FONT};font-size:13px;color:${DIM};line-height:1.75;
-        border-left:3px solid ${BLUE};padding:2px 0 2px 12px">
-      <b style="color:${INK}">ช่วงประมูลยังไม่ต้องแนบเอกสาร</b> ให้เน้นเสนอราคาก่อน
-      เอกสารประกอบ (TOR / แบบฟอร์มใบเสนอราคา) ดาวน์โหลดได้ในระบบหลังเข้าสู่ระบบ
-      — ไม่แนบไฟล์มากับอีเมลเพื่อความปลอดภัยของข้อมูล
-    </div>`),
+    ${eyebrow('เงื่อนไขการประมูล')}
+    ${rows([
+      ['รูปแบบ', `${esc(d.type)} — ไม่มีผู้ใดเห็นราคาของกัน แต่ปรับราคาได้ไม่จำกัดจนหมดเวลา`],
+      ['ปิดรับราคา', `<b>${esc(d.closesAt)}</b> (ตามเวลาระบบ)`],
+      ['เปิดซอง', `${esc(d.unsealAt)} พร้อมกันทุกราย`],
+      ['ยืนราคา', esc(d.validity)],
+      ['ส่งมอบ', esc(d.delivery)],
+    ])}
+    ${eyebrow('รายการที่ต้องเสนอราคา')}
+    ${itemsTable(d.items)}
+    ${eyebrow('เอกสารประกอบจากผู้ซื้อ')}
+    ${fileList(d.buyerFiles)}
+    <div style="font-family:${FONT};font-size:12px;color:${DIM};padding-top:4px">
+      ดาวน์โหลดได้ในระบบหลังเข้าสู่ระบบ — ไม่แนบไฟล์มากับอีเมลเพื่อความปลอดภัยของข้อมูล</div>
+    ${eyebrow(`เอกสารที่ต้องส่งภายใน 3 วันหลังปิดประมูล`)}
+    ${checklist(d.docs)}
+    <div style="padding-top:22px">
+      ${button('เข้าดูประกาศและยื่นราคา', APP)}${button('ขอสละสิทธิ์ในงานนี้', APP, 'ghost')}
+    </div>
+    ${note(`<b style="color:${INK}">ช่วงประมูลยังไม่ต้องแนบเอกสาร</b> ให้เน้นเสนอราคาก่อน
+      เมื่อปิดประมูลแล้วระบบจะเปิดให้ส่งเอกสารภายใน 3 วัน`)}`),
 })
 
 // ---------- ตัวรัน ----------
