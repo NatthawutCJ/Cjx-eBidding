@@ -149,7 +149,7 @@ ul.ticks svg{width:14px;height:14px;margin-top:.25rem;fill:none;stroke:var(--cj-
         <span class="tag">ตัวอย่าง</span>
       </div>
       <dl class="meta">
-        <dt>จาก</dt><dd>ฝ่ายจัดซื้อกลาง CJx &lt;noreply@bidding.cjmart.co.th&gt;</dd>
+        <dt>จาก</dt><dd>ฝ่ายจัดซื้อกลาง CJx &lt;noreply.snp@cjmart.co.th&gt;</dd>
         <dt>ถึง</dt><dd>chatnapa.ton@cjmart.co.th</dd>
         <dt>เวลา</dt><dd>19 Aug 26 17:30</dd>
       </dl>
@@ -203,7 +203,7 @@ ul.ticks svg{width:14px;height:14px;margin-top:.25rem;fill:none;stroke:var(--cj-
         <span class="tag">ตัวอย่าง</span>
       </div>
       <dl class="meta">
-        <dt>จาก</dt><dd>ฝ่ายจัดซื้อกลาง CJx &lt;noreply@bidding.cjmart.co.th&gt;</dd>
+        <dt>จาก</dt><dd>ฝ่ายจัดซื้อกลาง CJx &lt;noreply.snp@cjmart.co.th&gt;</dd>
         <dt>ถึง</dt><dd>chatnapa.ton@cjmart.co.th</dd>
         <dt>เวลา</dt><dd>19 Aug 26 17:42</dd>
       </dl>
@@ -302,7 +302,14 @@ ul.ticks svg{width:14px;height:14px;margin-top:.25rem;fill:none;stroke:var(--cj-
       <dt>ใครส่งอีเมล</dt>
       <dd>Supabase Auth ส่งฉบับ “เปิดบัญชี” ได้เอง แต่โควตาฟรีจำกัดไม่กี่ฉบับต่อชั่วโมง — ต่อ SMTP ข้างนอก (Resend หรือ Brevo free tier) แล้วยิงผ่าน Edge Function เพื่อส่งเชิญประมูลทีละ 20–30 ราย</dd>
       <dt>โดเมนผู้ส่ง</dt>
-      <dd>ต้องให้ IT เพิ่ม SPF, DKIM, DMARC ของ <span class="num">bidding.cjmart.co.th</span> ไม่ทำ อีเมลจะเข้า junk ของผู้ขายเกินครึ่ง</dd>
+      <dd>ส่งจาก <span class="num">noreply.snp@cjmart.co.th</span> ผ่าน SendGrid — โดเมน <span class="num">cjmart.co.th</span>
+        ตั้ง <span class="num">v=spf1 include:spf.protection.outlook.com -all</span> และ
+        <span class="num">DMARC p=quarantine</span> อยู่แล้ว ถ้าไม่ยืนยันโดเมนก่อน อีเมลจะโดน quarantine ทันที
+        ให้ IT ทำ <b>Domain Authentication แบบ CNAME</b> ใน SendGrid (ได้ DKIM ที่ <span class="num">d=cjmart.co.th</span>
+        ผ่าน DMARC ด้วย DKIM alignment) จะได้ <b>ไม่ต้องแตะ SPF ของบริษัท</b></dd>
+      <dt>ตอบกลับ</dt>
+      <dd>ตั้ง <span class="num">Reply-To</span> เป็นอีเมลจัดซื้อที่มีคนอ่านจริง เพราะผู้ขายกดตอบกลับแน่นอน
+        (ที่อยู่ผู้ส่งเป็น no-reply ไม่ต้องมี inbox — ระบบส่งอีเมลไม่ต้องการกล่องจดหมายของที่อยู่ผู้ส่ง)</dd>
       <dt>ลิงก์ในอีเมล</dt>
       <dd>เป็น token ใช้ครั้งเดียวที่ผูกกับอีเมลผู้รับ หมดอายุตามเวลา — ฟอร์เวิร์ดให้คนอื่นแล้วเข้าไม่ได้ในชื่อบริษัทอื่น</dd>
       <dt>เขียน HTML อีเมล</dt>
