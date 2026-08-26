@@ -3,7 +3,7 @@
 // ส่งอีเมลตัวอย่างผ่าน Resend (ต้นแบบ)
 //
 //   ดูก่อนโดยไม่ต้องมีคีย์:   node scripts/send-test-email.mjs welcome --dry-run
-//   ส่งจริง:                  RESEND_API_KEY=re_xxx node scripts/send-test-email.mjs welcome you@cjmart.co.th
+//   ส่งจริง:                  RESEND_API_KEY=re_Qmkoj9sV node scripts/send-test-email.mjs welcome you@cjmart.co.th
 //
 // แม่แบบใช้ <table> กับ inline CSS ล้วน ไม่ใช้ flex/grid เพราะ Outlook บนเดสก์ท็อป
 // เรนเดอร์ด้วยเอนจินของ Word ซึ่งไม่รู้จัก layout สมัยใหม่
@@ -167,8 +167,44 @@ const [kind, ...rest] = process.argv.slice(2)
 const dryRun = rest.includes('--dry-run')
 const to = rest.find(a => a.includes('@'))
 
+// ตัดช่องว่าง/บรรทัดใหม่ที่มักติดมาตอนคัดลอกคีย์
+const key = (process.env.RESEND_API_KEY || '').trim()
+
+// อธิบายคีย์โดยไม่เปิดเผยตัวคีย์ ใช้ตอนหาสาเหตุ 401
+const describeKey = () => key
+  ? `ยาว ${key.length} ตัวอักษร ขึ้นต้น ${key.slice(0, 6)}… ลงท้าย …${key.slice(-4)}`
+  : 'ไม่มีค่า'
+
+const keyHelp = () => {
+  console.error('\nคีย์ที่ตั้งไว้: ' + describeKey())
+  console.error('เช็กทีละข้อ:')
+  console.error('  1) คีย์จริงของ Resend ขึ้นต้นด้วย re_ และยาวราว 36 ตัวอักษร')
+  console.error('     ถ้าสั้นกว่านั้นแปลว่าคัดลอกมาจากหน้ารายการคีย์ ซึ่งโชว์แค่บางส่วน')
+  console.error('     Resend โชว์คีย์เต็มครั้งเดียวตอนกดสร้าง ถ้าพลาดให้สร้างใหม่แล้วคัดลอกทันที')
+  console.error('  2) ครอบด้วยเครื่องหมายคำพูดเสมอ:  export RESEND_API_KEY="re_xxxxx"')
+  console.error('  3) ตรวจว่าคีย์ใช้ได้จริง:  node scripts/send-test-email.mjs check')
+}
+
+// ---------- ตรวจคีย์อย่างเดียว ไม่ส่งอีเมล ----------
+if (kind === 'check') {
+  if (!key) { console.error('ยังไม่ได้ตั้ง RESEND_API_KEY'); process.exit(1) }
+  const r = await fetch('https://api.resend.com/domains', { headers: { Authorization: `Bearer ${key}` } })
+  const j = await r.json().catch(() => ({}))
+  if (!r.ok) {
+    console.error(`คีย์ใช้ไม่ได้ (HTTP ${r.status}): ${j.message || JSON.stringify(j)}`)
+    keyHelp()
+    process.exit(1)
+  }
+  console.log('คีย์ใช้ได้ ✓ (' + describeKey() + ')')
+  const list = j.data || []
+  console.log(list.length
+    ? 'โดเมนในบัญชีนี้:\n' + list.map(d => `  ${d.name} — ${d.status}`).join('\n')
+    : 'ยังไม่มีโดเมนในบัญชี — ส่งได้เฉพาะจาก onboarding@resend.dev ถึงอีเมลเจ้าของบัญชีเท่านั้น')
+  process.exit(0)
+}
+
 if (!TEMPLATES[kind]) {
-  console.error(`ใช้: node scripts/send-test-email.mjs <${Object.keys(TEMPLATES).join('|')}> <อีเมลผู้รับ> [--dry-run]`)
+  console.error(`ใช้: node scripts/send-test-email.mjs <${Object.keys(TEMPLATES).join('|')}|check> <อีเมลผู้รับ> [--dry-run]`)
   process.exit(1)
 }
 
@@ -182,7 +218,6 @@ if (dryRun) {
   process.exit(0)
 }
 
-const key = process.env.RESEND_API_KEY
 if (!key) {
   console.error('ไม่พบ RESEND_API_KEY — ตั้งค่าก่อน เช่น  export RESEND_API_KEY=re_xxxxx')
   console.error('หรือดูหน้าตาอีเมลก่อนโดยไม่ต้องส่ง:  node scripts/send-test-email.mjs ' + kind + ' --dry-run')
@@ -202,6 +237,7 @@ const out = await res.json().catch(() => ({}))
 
 if (!res.ok) {
   console.error(`ส่งไม่สำเร็จ (HTTP ${res.status}): ${out.message || JSON.stringify(out)}`)
+  if (res.status === 401) keyHelp()
   if (/domain is not verified|only send testing emails/i.test(out.message || '')) {
     console.error('→ ที่อยู่ผู้ส่ง onboarding@resend.dev ส่งได้เฉพาะอีเมลที่ใช้สมัครบัญชี Resend เท่านั้น')
     console.error('  ถ้าจะส่งหาคนอื่น ต้องให้ IT ยืนยันโดเมน cjmart.co.th ใน Resend ก่อน')
