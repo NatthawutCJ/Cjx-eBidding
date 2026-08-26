@@ -3,7 +3,7 @@
 // ส่งอีเมลตัวอย่างผ่าน Resend (ต้นแบบ)
 //
 //   ดูก่อนโดยไม่ต้องมีคีย์:   node scripts/send-test-email.mjs welcome --dry-run
-//   ส่งจริง:                  RESEND_API_KEY=re_Qmkoj9sV node scripts/send-test-email.mjs welcome you@cjmart.co.th
+//   ส่งจริง:                  RESEND_API_KEY=re_xxxxxxxxxxxx node scripts/send-test-email.mjs welcome you@cjmart.co.th
 //
 // แม่แบบใช้ <table> กับ inline CSS ล้วน ไม่ใช้ flex/grid เพราะ Outlook บนเดสก์ท็อป
 // เรนเดอร์ด้วยเอนจินของ Word ซึ่งไม่รู้จัก layout สมัยใหม่
@@ -66,6 +66,10 @@ const shell = (preheader, inner) => `<!doctype html>
 <html lang="th"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="x-apple-disable-message-reformatting">
+<meta name="color-scheme" content="light">
+<meta name="supported-color-schemes" content="light">
+<!-- กันไคลเอนต์ทำอีเมล/เบอร์เป็นลิงก์สีฟ้าเอง (Apple Mail ทำเป็นค่าเริ่มต้น) -->
+<meta name="format-detection" content="telephone=no,email=no,address=no">
 <style>
   /* จอแคบ: ตารางกว้าง 600 ย่อลงไม่ได้เอง (ตาราง HTML ย่อต่ำกว่าความกว้างขั้นต่ำของเนื้อหาไม่ได้)
      จึงต้องสั่งให้คอลัมน์ซ้าย-ขวาเรียงลงมาแทน  Outlook เดสก์ท็อปไม่อ่าน media query
@@ -83,9 +87,17 @@ const shell = (preheader, inner) => `<!doctype html>
  <tr><td align="center" style="padding:24px 12px">
   <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" class="wrap"
          style="width:600px;max-width:100%;background:#ffffff;border:1px solid ${LINE};border-radius:12px">
-   <tr><td style="padding:20px 28px;background:${BLUE};border-radius:12px 12px 0 0">
-     <div style="font-family:${FONT};font-size:17px;font-weight:700;color:#ffffff">ระบบประมูลจัดซื้อ CJx</div>
-     <div style="font-family:${FONT};font-size:12px;color:#c7d2f5;padding-top:2px">Supplier e-Bidding Portal</div>
+   <tr><td style="padding:18px 28px;background:#ffffff;border-bottom:3px solid ${BLUE};border-radius:12px 12px 0 0">
+     <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
+       <td style="padding-right:12px;vertical-align:middle">
+         <img src="${APP}/cjx-logo.png" alt="CJx" height="36"
+              style="display:block;height:36px;width:auto;border:0">
+       </td>
+       <td style="vertical-align:middle">
+         <div style="font-family:${FONT};font-size:16px;font-weight:700;color:${INK}">ระบบประมูลจัดซื้อ CJx</div>
+         <div style="font-family:${FONT};font-size:12px;color:${DIM};padding-top:2px">Supplier e-Bidding Portal</div>
+       </td>
+     </tr></table>
    </td></tr>
    <tr><td style="padding:28px">${inner}</td></tr>
    <tr><td style="padding:16px 28px;border-top:1px solid ${LINE};background:#fafbfc;border-radius:0 0 12px 12px">
@@ -206,6 +218,12 @@ if (kind === 'check') {
 if (!TEMPLATES[kind]) {
   console.error(`ใช้: node scripts/send-test-email.mjs <${Object.keys(TEMPLATES).join('|')}|check> <อีเมลผู้รับ> [--dry-run]`)
   process.exit(1)
+}
+
+if (!process.env.APP_URL) {
+  console.warn(`เตือน: ไม่ได้ตั้ง APP_URL จึงใช้ค่าเดา ${APP}`)
+  console.warn('       ปุ่มในอีเมลและรูปโลโก้จะชี้ไปที่นี่ ถ้าไม่ใช่ URL จริงของเว็บ โลโก้จะไม่ขึ้น')
+  console.warn('       ตั้งให้ถูกด้วย  export APP_URL="https://<ชื่อโปรเจกต์>.pages.dev"\n')
 }
 
 const mail = TEMPLATES[kind](SAMPLE)
