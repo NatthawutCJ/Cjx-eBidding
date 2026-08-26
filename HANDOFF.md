@@ -77,7 +77,7 @@
 
 ## คำถามค้าง (Open questions)
 
-- ชื่อโปรเจกต์ / URL ของ Cloudflare Pages — เซสชันนี้ไม่เคยเห็น ต้องดูจาก dashboard ของ Neo
+- ~~ชื่อโปรเจกต์ / URL ของ Cloudflare Pages~~ — ยืนยันแล้ว: `https://cjx-ebidding.pages.dev` (ตอบ 200 และเสิร์ฟ `/cjx-logo.png` ได้)
 - repo บน GitHub เป็น public หรือ private? ถ้า public ให้ตรวจซ้ำว่าไม่มีคีย์ใด ๆ ถูก commit (ตอนนี้ `.env` ถูก ignore แล้ว)
 - ยังไม่มีนโยบายสำรองข้อมูล (backup) — Supabase free tier เก็บ backup ให้จำกัด ควรตัดสินใจก่อนใช้งานจริง
 

@@ -3,7 +3,7 @@
 // ส่งอีเมลตัวอย่างผ่าน Resend (ต้นแบบ)
 //
 //   ดูก่อนโดยไม่ต้องมีคีย์:   node scripts/send-test-email.mjs welcome --dry-run
-//   ส่งจริง:                  RESEND_API_KEY=re_xxxxxxxxxxxx node scripts/send-test-email.mjs welcome you@cjmart.co.th
+//   ส่งจริง:                  RESEND_API_KEY=<คีย์ของคุณ> node scripts/send-test-email.mjs welcome you@cjmart.co.th
 //
 // แม่แบบใช้ <table> กับ inline CSS ล้วน ไม่ใช้ flex/grid เพราะ Outlook บนเดสก์ท็อป
 // เรนเดอร์ด้วยเอนจินของ Word ซึ่งไม่รู้จัก layout สมัยใหม่
@@ -286,7 +286,7 @@ const keyHelp = () => {
   console.error('  1) คีย์จริงของ Resend ขึ้นต้นด้วย re_ และยาวราว 36 ตัวอักษร')
   console.error('     ถ้าสั้นกว่านั้นแปลว่าคัดลอกมาจากหน้ารายการคีย์ ซึ่งโชว์แค่บางส่วน')
   console.error('     Resend โชว์คีย์เต็มครั้งเดียวตอนกดสร้าง ถ้าพลาดให้สร้างใหม่แล้วคัดลอกทันที')
-  console.error('  2) ครอบด้วยเครื่องหมายคำพูดเสมอ:  export RESEND_API_KEY="re_xxxxx"')
+  console.error('  2) ครอบด้วยเครื่องหมายคำพูดเสมอ:  export RESEND_API_KEY="<คีย์ของคุณ>"')
   console.error('  3) ตรวจว่าคีย์ใช้ได้จริง:  node scripts/send-test-email.mjs check')
 }
 
@@ -313,11 +313,18 @@ if (!TEMPLATES[kind]) {
   process.exit(1)
 }
 
-if (!process.env.APP_URL) {
-  console.warn(`เตือน: ไม่ได้ตั้ง APP_URL จึงใช้ค่าเดา ${APP}`)
-  console.warn('       ปุ่มในอีเมลและรูปโลโก้จะชี้ไปที่นี่ ถ้าไม่ใช่ URL จริงของเว็บ โลโก้จะไม่ขึ้น')
-  console.warn('       ตั้งให้ถูกด้วย  export APP_URL="https://<ชื่อโปรเจกต์>.pages.dev"\n')
-}
+// เช็กจริงว่าโลโก้โหลดได้จาก URL ที่จะใส่ในอีเมล ดีกว่าเตือนลอย ๆ
+const logoUrl = `${APP}/cjx-logo.png`
+let logoOk = false
+try {
+  const r = await fetch(logoUrl, { method: 'HEAD', signal: AbortSignal.timeout(8000) })
+  logoOk = r.ok && (r.headers.get('content-type') || '').startsWith('image/')
+} catch { /* ออฟไลน์ หรือ URL ผิด */ }
+
+console.log(logoOk
+  ? `โลโก้: ${logoUrl} ✓`
+  : `โลโก้: ${logoUrl} ✗ โหลดไม่ได้ — ในอีเมลจะขึ้นคำว่า CJx แทนรูป
+       ถ้า URL ของเว็บไม่ใช่อันนี้ ตั้งให้ถูกด้วย  export APP_URL="https://ชื่อโปรเจกต์จริง.pages.dev"`)
 
 const mail = TEMPLATES[kind](SAMPLE)
 
@@ -325,12 +332,13 @@ if (dryRun) {
   const file = `preview-${kind}.html`
   writeFileSync(file, mail.html)
   console.log(`หัวเรื่อง: ${mail.subject}`)
-  console.log(`เขียนไฟล์ตัวอย่างแล้ว: ${file} — เปิดด้วยเบราว์เซอร์เพื่อดูหน้าตา (ยังไม่ได้ส่งอีเมล)`)
+  console.log('สำเร็จ — เขียนไฟล์ตัวอย่างแล้ว (ยังไม่ได้ส่งอีเมล)')
+  console.log(`เปิดดูด้วยคำสั่ง:  open ${file}`)
   process.exit(0)
 }
 
 if (!key) {
-  console.error('ไม่พบ RESEND_API_KEY — ตั้งค่าก่อน เช่น  export RESEND_API_KEY=re_xxxxx')
+  console.error('ไม่พบ RESEND_API_KEY — ตั้งค่าก่อน เช่น  export RESEND_API_KEY=<คีย์ของคุณ>')
   console.error('หรือดูหน้าตาอีเมลก่อนโดยไม่ต้องส่ง:  node scripts/send-test-email.mjs ' + kind + ' --dry-run')
   process.exit(1)
 }
