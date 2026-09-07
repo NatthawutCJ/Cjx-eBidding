@@ -324,7 +324,7 @@ try {
 console.log(logoOk
   ? `โลโก้: ${logoUrl} ✓`
   : `โลโก้: ${logoUrl} ✗ โหลดไม่ได้ — ในอีเมลจะขึ้นคำว่า CJx แทนรูป
-       ถ้า URL ของเว็บไม่ใช่อันนี้ ตั้งให้ถูกด้วย  export APP_URL="https://ชื่อโปรเจกต์จริง.pages.dev"`)
+       ถ้า URL ของเว็บไม่ใช่อันนี้ ตั้งให้ถูกด้วย  export APP_URL="https://cjx-ebidding.pages.dev/"`)
 
 const mail = TEMPLATES[kind](SAMPLE)
 

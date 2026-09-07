@@ -68,7 +68,10 @@
 
 1. รัน `13_verify_install.sql` ใน Supabase → SQL Editor ยืนยันว่าไม่มีอะไรขาด (ควรได้ ✅ ทั้งหมด รวมบรรทัดที่ยืนยันว่า `tenders.budget` ต้องไม่มี)
    **`[?]` ไฟล์นี้เพิ่งเขียนและยังไม่เคยรันจริง** — เป็น select อย่างเดียว ไม่แก้ข้อมูล ถ้า syntax พังให้แก้ที่ตัวไฟล์ได้เลย ไม่กระทบระบบ
-2. ต่อ **Custom SMTP** (Brevo หรือ Resend) ใน Supabase → Authentication → Emails เพื่อให้ปุ่ม "ลืมรหัสผ่าน" ใช้งานได้จริง — ต้องให้ IT เพิ่ม SPF/DKIM/DMARC ของโดเมนที่ใช้ส่ง
+2. **อีเมลออก** — เลือก Resend แล้ว มีสคริปต์ต้นแบบที่ `app/scripts/send-test-email.mjs` (ส่งได้จริงแล้วผ่าน `onboarding@resend.dev` ถึงอีเมลเจ้าของบัญชี) ที่ค้างอยู่คือ:
+   - IT เพิ่ม DNS records ของ Resend (MX + TXT ใต้ `send.cjmart.co.th` และ DKIM) — **ไม่ต้องแก้ SPF เดิมของโดเมนหลักที่เป็น `-all`**
+   - กลุ่ม `noreply.snp@cjmart.co.th` (mail-enabled security group) สร้างแล้ว 7 Sep 2026 — ต้องเปิดรับอีเมลจากภายนอก (`RequireSenderAuthenticationEnabled $false`) เพื่อรับการตอบกลับและอีเมลตีกลับ
+   - เสร็จแล้วตั้ง Supabase → Authentication → SMTP: `smtp.resend.com:587`, user `resend`, pass = API key, sender = `noreply.snp@cjmart.co.th` → ปุ่ม "ลืมรหัสผ่าน" จะใช้งานได้
 3. ตั้ง **custom domain** (แผนเดิมคือ `bidding.cjmart.co.th`) ที่ Cloudflare Pages ก่อนเชิญผู้ขายจริง
 4. ตรวจว่า**งานตัวอย่างจาก `05_seed.sql` ถูกลบออกจาก production แล้ว** ก่อนเปิดใช้จริง (ใช้ปุ่มลบในหน้ารายละเอียดประกาศ — ลบได้เพราะยังไม่มีใครยื่นราคา)
 5. ทดสอบ RLS ก่อนเปิดใช้จริง: ล็อกอินเป็นผู้ขาย A แล้วยิง REST ตรง ๆ ต้องไม่เห็นราคาของผู้ขาย B ในงานแบบปิด และต้องไม่เห็น `tender_internal` เลย (เช็กลิสต์อยู่ใน `deploy-guide.html`)

@@ -224,3 +224,22 @@ curl "$SUPABASE_URL/rest/v1/tender_internal?select=*" \
 ตอนรันครั้งแรกถ้ามี error ให้ส่ง error มาได้เลย และควรทดสอบตามลำดับนี้:
 เข้าสู่ระบบ → เห็นรายการงาน → ยื่นราคาในงานเปิดราคา → เปิดอีกเบราว์เซอร์เป็นผู้ขายรายที่สองแล้วดูว่าราคาขึ้นเรียลไทม์ →
 ล็อกอินเป็นฝ่ายจัดซื้อ → เปิดซองงานปิดราคา → ประกาศผู้ชนะ
+
+## อีเมลออกจากระบบ
+
+ค่าที่ตั้งผ่าน environment variable (ไม่ต้องแก้โค้ด):
+
+| ตัวแปร | ค่าเริ่มต้น | ใช้ทำอะไร |
+|---|---|---|
+| `RESEND_API_KEY` | — | คีย์ Resend **ห้ามใส่ในไฟล์ ให้ตั้งใน shell เท่านั้น** |
+| `MAIL_FROM` | `CJx e-Bidding (ทดสอบ) <onboarding@resend.dev>` | ที่อยู่ผู้ส่ง เปลี่ยนเป็น `ฝ่ายจัดซื้อกลาง CJx <noreply.snp@cjmart.co.th>` หลัง Resend ยืนยันโดเมนแล้ว |
+| `MAIL_REPLY_TO` | `procurement@cjmart.co.th` | ที่อยู่รับการตอบกลับ ต้องมีคนอ่านจริง |
+| `APP_URL` | `https://cjx-ebidding.pages.dev` | ปุ่มในอีเมลและรูปโลโก้ (`/cjx-logo.png`) ชี้ไปที่นี่ |
+
+`noreply.snp@cjmart.co.th` เป็น **mail-enabled security group** ใน Microsoft 365 — ใช้เป็นที่อยู่ *รับ*
+(การตอบกลับของผู้ขาย + อีเมลตีกลับ) ไม่เกี่ยวกับสิทธิ์ในการ *ส่ง* สิทธิ์ส่งมาจากการยืนยันโดเมนใน Resend
+ผ่าน DNS เท่านั้น ให้ IT เปิดรับอีเมลจากภายนอกให้กลุ่มนี้ด้วย ไม่งั้นการตอบกลับจากผู้ขายจะถูกปฏิเสธ:
+
+```powershell
+Set-DistributionGroup -Identity noreply.snp@cjmart.co.th -RequireSenderAuthenticationEnabled $false
+```
