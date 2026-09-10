@@ -71,7 +71,8 @@ app/
 │   ├── 12_hide_budget.sql       ย้ายงบประมาณไปตารางลับ ผู้ขายอ่านไม่ได้
 │   └── 13_verify_install.sql    ตรวจว่ารันไฟล์ครบแล้วหรือยัง (อ่านเท่านั้น)
 ├── scripts/
-│   └── send-test-email.mjs      ส่งอีเมลตัวอย่างผ่าน Resend (ต้นแบบ) + โหมด --dry-run ดูหน้าตาก่อนส่ง
+│   ├── send-test-email.mjs      ส่งอีเมลตัวอย่างผ่าน Resend (ต้นแบบ) + โหมด --dry-run ดูหน้าตาก่อนส่ง
+│   └── check-mail-dns.mjs       ตรวจว่า DNS สำหรับส่งอีเมลพร้อมหรือยัง (ใช้ตอนรอ IT)
 ├── src/
 │   ├── styles.css         ธีมทั้งระบบ (สี ฟอนต์ ระยะ) — แก้ที่ :root ที่เดียว
 │   ├── lib/supabase.js    สร้าง client จาก .env
