@@ -371,6 +371,16 @@ if (kind === 'check') {
 
   const r = await fetch('https://api.resend.com/domains', { headers: { Authorization: `Bearer ${key}` } })
   const j = await r.json().catch(() => ({}))
+
+  // คีย์แบบ "Sending access" อ่านรายการโดเมนไม่ได้ตามสิทธิ์ที่ตั้งไว้ — ไม่ใช่คีย์ผิด
+  if (/restricted to only send/i.test(j.message || '')) {
+    console.log('คีย์ใช้ได้ ✓ (' + describeKey() + ')')
+    console.log('เป็นคีย์แบบ Sending access จึงอ่านรายการโดเมนไม่ได้ — ถูกต้องแล้ว ปลอดภัยกว่า Full access')
+    console.log('ดูสถานะโดเมนได้ที่ resend.com → Domains · เช็ก DNS ด้วย  node scripts/check-mail-dns.mjs')
+    console.log('\nลองส่งจริงเลย:  node scripts/send-test-email.mjs invite delivered@resend.dev')
+    process.exit(0)
+  }
+
   if (!r.ok) {
     console.error(`คีย์ใช้ไม่ได้ (HTTP ${r.status}): ${j.message || JSON.stringify(j)}`)
     keyHelp()
