@@ -299,6 +299,19 @@ const to = rest.find(a => a.includes('@'))
 const KEY_VAR = PROVIDER === 'brevo' ? 'BREVO_API_KEY' : 'RESEND_API_KEY'
 const key = (process.env[KEY_VAR] || '').trim()
 
+// คีย์ต้องเป็น ASCII เพราะจะถูกใส่ใน HTTP header — ถ้าเผลอวางข้อความตัวอย่างภาษาไทยมา
+// fetch จะโยน TypeError ดิบ ๆ อ่านไม่รู้เรื่อง จึงดักไว้ตรงนี้ก่อน
+if (key && !/^[\x20-\x7E]+$/.test(key)) {
+  const bad = [...key].find(c => c.charCodeAt(0) > 126)
+  console.error(`คีย์ที่ตั้งไว้ไม่ใช่คีย์จริง — มีตัวอักษร “${bad}” ที่ใช้ใน API key ไม่ได้`)
+  console.error(`ค่าที่ตั้งไว้ตอนนี้: ${key.slice(0, 14)}…  (ยาว ${key.length} ตัวอักษร)`)
+  console.error('')
+  console.error('คุณวางข้อความตัวอย่างมาแทนคีย์ ให้เอาคีย์จริงจาก resend.com → API Keys มาใส่:')
+  console.error(`  export ${KEY_VAR}="ค่าที่คัดลอกจากหน้าเว็บ"`)
+  console.error('คีย์ของ Resend ขึ้นต้นด้วย re_ และมีแต่ตัวอักษรอังกฤษกับตัวเลข')
+  process.exit(1)
+}
+
 // อธิบายคีย์โดยไม่เปิดเผยตัวคีย์ ใช้ตอนหาสาเหตุ 401
 const describeKey = () => key
   ? `ยาว ${key.length} ตัวอักษร ขึ้นต้น ${key.slice(0, 6)}… ลงท้าย …${key.slice(-4)}`
