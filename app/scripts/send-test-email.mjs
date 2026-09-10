@@ -11,14 +11,25 @@
 // แม่แบบใช้ <table> กับ inline CSS ล้วน ไม่ใช้ flex/grid เพราะ Outlook บนเดสก์ท็อป
 // เรนเดอร์ด้วยเอนจินของ Word ซึ่งไม่รู้จัก layout สมัยใหม่
 //
+//   ส่งออกจริงตอน DNS ยังไม่พร้อม (Brevo ยืนยันรายที่อยู่ด้วย OTP):
+//     MAIL_PROVIDER=brevo BREVO_API_KEY=xkeysib-... \
+//     MAIL_FROM="ฝ่ายจัดซื้อกลาง CJx <noreply.snp@cjmart.co.th>" \
+//     node scripts/send-test-email.mjs invite supplier@example.com
+//
 // ที่อยู่ผู้ส่ง:
-//   ก่อน IT ยืนยันโดเมน — onboarding@resend.dev (ส่งได้เฉพาะอีเมลเจ้าของบัญชี Resend)
-//   หลังยืนยันโดเมนแล้ว  — MAIL_FROM="ฝ่ายจัดซื้อกลาง CJx <noreply.snp@cjmart.co.th>"
+//   Resend ก่อนยืนยันโดเมน — onboarding@resend.dev (ส่งได้เฉพาะอีเมลเจ้าของบัญชี)
+//   Brevo หลังยืนยัน OTP   — ส่งจาก noreply.snp@cjmart.co.th ได้เลย แต่ DMARC ไม่ aligned
+//   Resend หลังยืนยันโดเมน — ทางที่ควรใช้จริง ผ่าน DMARC ครบ
 // ---------------------------------------------------------------------------
 
 import { writeFileSync } from 'node:fs'
 
-const API   = 'https://api.resend.com/emails'
+// รองรับ 2 ผู้ให้บริการ เพราะเงื่อนไข "ส่งจากที่อยู่ของบริษัท" ต่างกัน
+//   resend (ค่าเริ่มต้น) — ต้องยืนยัน "โดเมน" ด้วย DNS ก่อน จึงส่งจาก @cjmart.co.th ได้
+//   brevo               — ยืนยันแค่ "ที่อยู่อีเมลรายตัว" ด้วยรหัส OTP ที่ส่งไปที่อยู่นั้น
+//                         ใช้ส่งออกจริงได้เลยแม้ DNS ยังไม่พร้อม แต่ DMARC ไม่ aligned
+//                         (DKIM เป็นของ Brevo) โดเมนเราตั้ง p=quarantine ไว้ อีเมลจึงมีสิทธิ์เข้า junk
+const PROVIDER = (process.env.MAIL_PROVIDER || 'resend').toLowerCase()
 const FROM  = process.env.MAIL_FROM || 'CJx e-Bidding (ทดสอบ) <onboarding@resend.dev>'
 const APP   = process.env.APP_URL   || 'https://cjx-ebidding.pages.dev'
 const REPLY = process.env.MAIL_REPLY_TO || 'procurement@cjmart.co.th'
@@ -55,6 +66,11 @@ const SAMPLE = {
 const YEL = '#E9C84A', GRN = '#42904E', INK = '#141b2d', DIM = '#5b6478', LINE = '#e2e5ec'
 const WASH = '#eef4ee', SOFT = '#f7f8fa'
 const FONT = "-apple-system,'Segoe UI',Roboto,'Helvetica Neue',Arial,'Noto Sans Thai',sans-serif"
+
+const parseFrom = f => {
+  const m = f.match(/^\s*(.*?)\s*<(.+)>\s*$/)
+  return m ? { name: m[1], email: m[2] } : { name: '', email: f.trim() }
+}
 
 const esc = v => String(v).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]))
 
@@ -280,7 +296,8 @@ const asEml  = rest.includes('--eml')
 const to = rest.find(a => a.includes('@'))
 
 // ตัดช่องว่าง/บรรทัดใหม่ที่มักติดมาตอนคัดลอกคีย์
-const key = (process.env.RESEND_API_KEY || '').trim()
+const KEY_VAR = PROVIDER === 'brevo' ? 'BREVO_API_KEY' : 'RESEND_API_KEY'
+const key = (process.env[KEY_VAR] || '').trim()
 
 // อธิบายคีย์โดยไม่เปิดเผยตัวคีย์ ใช้ตอนหาสาเหตุ 401
 const describeKey = () => key
@@ -288,18 +305,40 @@ const describeKey = () => key
   : 'ไม่มีค่า'
 
 const keyHelp = () => {
-  console.error('\nคีย์ที่ตั้งไว้: ' + describeKey())
+  console.error('\nผู้ให้บริการ: ' + PROVIDER + ' · คีย์ที่ตั้งไว้: ' + describeKey())
   console.error('เช็กทีละข้อ:')
-  console.error('  1) คีย์จริงของ Resend ขึ้นต้นด้วย re_ และยาวราว 36 ตัวอักษร')
-  console.error('     ถ้าสั้นกว่านั้นแปลว่าคัดลอกมาจากหน้ารายการคีย์ ซึ่งโชว์แค่บางส่วน')
-  console.error('     Resend โชว์คีย์เต็มครั้งเดียวตอนกดสร้าง ถ้าพลาดให้สร้างใหม่แล้วคัดลอกทันที')
-  console.error('  2) ครอบด้วยเครื่องหมายคำพูดเสมอ:  export RESEND_API_KEY="<คีย์ของคุณ>"')
+  console.error(PROVIDER === 'brevo'
+    ? '  1) คีย์ของ Brevo ขึ้นต้นด้วย xkeysib- (SMTP & API → API keys)'
+    : '  1) คีย์ของ Resend ขึ้นต้นด้วย re_ ยาวราว 36 ตัวอักษร และโชว์เต็มครั้งเดียวตอนกดสร้าง')
+  console.error(`  2) ครอบด้วยเครื่องหมายคำพูดเสมอ:  export ${KEY_VAR}="<คีย์ของคุณ>"`)
   console.error('  3) ตรวจว่าคีย์ใช้ได้จริง:  node scripts/send-test-email.mjs check')
 }
 
 // ---------- ตรวจคีย์อย่างเดียว ไม่ส่งอีเมล ----------
 if (kind === 'check') {
-  if (!key) { console.error('ยังไม่ได้ตั้ง RESEND_API_KEY'); process.exit(1) }
+  if (!key) { console.error(`ยังไม่ได้ตั้ง ${KEY_VAR}`); process.exit(1) }
+
+  // Brevo: เช็กว่าคีย์ใช้ได้ และที่อยู่ผู้ส่งผ่านการยืนยัน OTP แล้วหรือยัง
+  if (PROVIDER === 'brevo') {
+    const r = await fetch('https://api.brevo.com/v3/senders', { headers: { 'api-key': key, accept: 'application/json' } })
+    const j = await r.json().catch(() => ({}))
+    if (!r.ok) {
+      console.error(`คีย์ใช้ไม่ได้ (HTTP ${r.status}): ${j.message || JSON.stringify(j)}`)
+      keyHelp(); process.exit(1)
+    }
+    console.log('คีย์ใช้ได้ ✓ (' + describeKey() + ')')
+    const list = j.senders || []
+    console.log(list.length ? 'ที่อยู่ผู้ส่งในบัญชีนี้:' : 'ยังไม่มีที่อยู่ผู้ส่ง — ไปเพิ่มที่ Senders แล้วยืนยันด้วยรหัส OTP')
+    for (const sn of list) console.log(`  ${sn.email}  ${sn.active ? '✓ ยืนยันแล้ว ส่งได้' : '✗ ยังไม่ยืนยัน'}`)
+    const mine = parseFrom(FROM).email
+    const ok = list.find(sn => sn.email.toLowerCase() === mine.toLowerCase())
+    console.log()
+    console.log(ok?.active
+      ? `พร้อมส่งในนาม ${mine} ✓`
+      : `MAIL_FROM ปัจจุบันคือ ${mine} ซึ่ง${ok ? 'ยังไม่ผ่านการยืนยัน' : 'ยังไม่ได้เพิ่มในบัญชี Brevo'} — ส่งไม่ได้จนกว่าจะยืนยัน`)
+    process.exit(ok?.active ? 0 : 1)
+  }
+
   const r = await fetch('https://api.resend.com/domains', { headers: { Authorization: `Bearer ${key}` } })
   const j = await r.json().catch(() => ({}))
   if (!r.ok) {
@@ -375,7 +414,7 @@ if (dryRun) {
 }
 
 if (!key) {
-  console.error('ไม่พบ RESEND_API_KEY — ตั้งค่าก่อน เช่น  export RESEND_API_KEY=<คีย์ของคุณ>')
+  console.error(`ไม่พบ ${KEY_VAR} — ตั้งค่าก่อน เช่น  export ${KEY_VAR}="<คีย์ของคุณ>"`)
   console.error('หรือดูหน้าตาอีเมลก่อนโดยไม่ต้องส่ง:  node scripts/send-test-email.mjs ' + kind + ' --dry-run')
   process.exit(1)
 }
@@ -384,11 +423,26 @@ if (!to) {
   process.exit(1)
 }
 
-const res = await fetch(API, {
-  method: 'POST',
-  headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
-  body: JSON.stringify({ from: FROM, to: [to], reply_to: REPLY, subject: mail.subject, html: mail.html }),
-})
+const sender = parseFrom(FROM)
+const req = PROVIDER === 'brevo'
+  ? {
+      url: 'https://api.brevo.com/v3/smtp/email',
+      headers: { 'api-key': key, 'content-type': 'application/json', accept: 'application/json' },
+      body: {
+        sender: { name: sender.name || undefined, email: sender.email },
+        to: [{ email: to }],
+        replyTo: { email: REPLY },
+        subject: mail.subject,
+        htmlContent: mail.html,
+      },
+    }
+  : {
+      url: 'https://api.resend.com/emails',
+      headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
+      body: { from: FROM, to: [to], reply_to: REPLY, subject: mail.subject, html: mail.html },
+    }
+
+const res = await fetch(req.url, { method: 'POST', headers: req.headers, body: JSON.stringify(req.body) })
 const out = await res.json().catch(() => ({}))
 
 if (!res.ok) {
@@ -396,11 +450,17 @@ if (!res.ok) {
   if (res.status === 401) keyHelp()
   if (/domain is not verified|only send testing emails/i.test(out.message || '')) {
     console.error('→ ที่อยู่ผู้ส่ง onboarding@resend.dev ส่งได้เฉพาะอีเมลที่ใช้สมัครบัญชี Resend เท่านั้น')
-    console.error('  ถ้าจะส่งหาคนอื่น ต้องให้ IT ยืนยันโดเมน cjmart.co.th ใน Resend ก่อน')
+    console.error('  ถ้าจะส่งหาคนอื่นตอนนี้ ให้ใช้ Brevo ที่ยืนยันรายที่อยู่ได้:')
+    console.error('  MAIL_PROVIDER=brevo BREVO_API_KEY=xkeysib-... node scripts/send-test-email.mjs ' + kind + ' ' + to)
   }
+  if (/sender.*not valid|not been validated|unrecognized sender/i.test(JSON.stringify(out)))
+    console.error(`→ ที่อยู่ ${sender.email} ยังไม่ผ่านการยืนยันใน Brevo — เพิ่มที่ Senders แล้วกรอกรหัส OTP ที่ส่งไปที่อยู่นั้น`)
   process.exit(1)
 }
 
-console.log(`ส่งแล้ว → ${to}`)
+console.log(`ส่งออกแล้วจริง → ${to}`)
+console.log(`ในนาม: ${FROM}`)
 console.log(`หัวเรื่อง: ${mail.subject}`)
-console.log(`id: ${out.id}`)
+console.log(`id: ${out.id || out.messageId || '-'}`)
+if (PROVIDER === 'brevo')
+  console.log('เช็ก junk ด้วย — DKIM เป็นของ Brevo ยังไม่ aligned กับ cjmart.co.th (DMARC p=quarantine)')
