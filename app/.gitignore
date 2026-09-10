@@ -4,3 +4,4 @@ dist
 .DS_Store
 preview-*.html
 preview-*.eml
+.mail-key-*

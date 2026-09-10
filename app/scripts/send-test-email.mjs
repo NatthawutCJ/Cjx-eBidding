@@ -22,7 +22,7 @@
 //   Resend หลังยืนยันโดเมน — ทางที่ควรใช้จริง ผ่าน DMARC ครบ
 // ---------------------------------------------------------------------------
 
-import { writeFileSync } from 'node:fs'
+import { writeFileSync, readFileSync } from 'node:fs'
 
 // รองรับ 2 ผู้ให้บริการ เพราะเงื่อนไข "ส่งจากที่อยู่ของบริษัท" ต่างกัน
 //   resend (ค่าเริ่มต้น) — ต้องยืนยัน "โดเมน" ด้วย DNS ก่อน จึงส่งจาก @cjmart.co.th ได้
@@ -295,38 +295,52 @@ const dryRun = rest.includes('--dry-run')
 const asEml  = rest.includes('--eml')
 const to = rest.find(a => a.includes('@'))
 
-// ตัดช่องว่าง/บรรทัดใหม่ที่มักติดมาตอนคัดลอกคีย์
-const KEY_VAR = PROVIDER === 'brevo' ? 'BREVO_API_KEY' : 'RESEND_API_KEY'
-const key = (process.env[KEY_VAR] || '').trim()
+// ---------- หาคีย์: จาก environment variable หรือจากไฟล์ที่บันทึกไว้ด้วย login ----------
+const KEY_VAR  = PROVIDER === 'brevo' ? 'BREVO_API_KEY' : 'RESEND_API_KEY'
+const KEY_FILE = new URL(`../.mail-key-${PROVIDER}`, import.meta.url)
+const PREFIX   = PROVIDER === 'brevo' ? 'xkeysib-' : 're_'
 
-// คีย์ต้องเป็น ASCII เพราะจะถูกใส่ใน HTTP header — ถ้าเผลอวางข้อความตัวอย่างภาษาไทยมา
-// fetch จะโยน TypeError ดิบ ๆ อ่านไม่รู้เรื่อง จึงดักไว้ตรงนี้ก่อน
-if (key && !/^[\x20-\x7E]+$/.test(key)) {
-  const bad = [...key].find(c => c.charCodeAt(0) > 126)
-  console.error(`คีย์ที่ตั้งไว้ไม่ใช่คีย์จริง — มีตัวอักษร “${bad}” ที่ใช้ใน API key ไม่ได้`)
-  console.error(`ค่าที่ตั้งไว้ตอนนี้: ${key.slice(0, 14)}…  (ยาว ${key.length} ตัวอักษร)`)
-  console.error('')
-  console.error('คุณวางข้อความตัวอย่างมาแทนคีย์ ให้เอาคีย์จริงจาก resend.com → API Keys มาใส่:')
-  console.error(`  export ${KEY_VAR}="ค่าที่คัดลอกจากหน้าเว็บ"`)
-  console.error('คีย์ของ Resend ขึ้นต้นด้วย re_ และมีแต่ตัวอักษรอังกฤษกับตัวเลข')
-  process.exit(1)
-}
-
-// ค่าตัวอย่างที่เคยเขียนไว้ในคู่มือ/คำแนะนำ — ถ้าเจอค่าเหล่านี้แปลว่าคัดลอกตัวอย่างมา ไม่ใช่คีย์จริง
+// ค่าตัวอย่างที่เคยเขียนไว้ในคู่มือ — ถ้าเจอค่าเหล่านี้แปลว่าคัดลอกตัวอย่างมา ไม่ใช่คีย์จริง
 const EXAMPLES = [
   're_1AbC2dEf_GhIjKlMnOpQrStUvWxYz3456',
   're_xxxxx', 're_xxxxxxxxxxxx', 're_1234567890',
   'xkeysib-fake', 'xkeysib-xxxxx',
 ]
-if (key && EXAMPLES.includes(key)) {
-  console.error('คีย์ที่ตั้งไว้เป็น "ค่าตัวอย่าง" ที่ยกมาให้ดูรูปแบบ ไม่ใช่คีย์ของบัญชีคุณ')
-  console.error('คีย์จริงต้องคัดลอกจากหน้าเว็บของผู้ให้บริการเท่านั้น ไม่มีใครเดาหรือพิมพ์ให้ได้')
-  console.error('')
-  console.error('วิธีที่พลาดยากที่สุด — คัดลอกคีย์ในเบราว์เซอร์ แล้วรันคำสั่งนี้ (ดึงจากคลิปบอร์ดตรง ๆ):')
-  console.error(`  export ${KEY_VAR}="$(pbpaste)"`)
-  console.error(`  node scripts/send-test-email.mjs check`)
-  process.exit(1)
+
+// คีย์ที่ใช้ได้ต้องเป็น ASCII ไม่มีช่องว่าง และขึ้นต้นถูกต้อง
+// (กันเคสที่เจอจริง: วางคำสั่งทั้งบรรทัด วางข้อความไทย วางค่าตัวอย่าง)
+const whyBad = k =>
+  !k                                ? 'ยังไม่ได้ตั้งค่า'
+  : !/^[\x20-\x7E]+$/.test(k)       ? `มีตัวอักษร “${[...k].find(c => c.charCodeAt(0) > 126)}” ที่ใช้ใน API key ไม่ได้`
+  : /\s/.test(k)                    ? 'มีช่องว่างอยู่ข้างใน — เหมือนวางคำสั่งทั้งบรรทัดมา ไม่ใช่เฉพาะคีย์'
+  : EXAMPLES.includes(k)            ? 'เป็นค่าตัวอย่างที่ยกมาให้ดูรูปแบบ ไม่ใช่คีย์ของบัญชีคุณ'
+  : !k.startsWith(PREFIX)           ? `ไม่ได้ขึ้นต้นด้วย ${PREFIX}`
+  : null
+
+const readKeyFile = () => { try { return readFileSync(KEY_FILE, 'utf8').trim() } catch { return '' } }
+
+const envKey  = (process.env[KEY_VAR] || '').trim()
+const fileKey = readKeyFile()
+let key = '', keySource = ''
+if (!whyBad(envKey))       { key = envKey;  keySource = KEY_VAR }
+else if (!whyBad(fileKey)) { key = fileKey; keySource = 'ไฟล์ที่บันทึกไว้' }
+
+// ---------- บันทึกคีย์ลงไฟล์ครั้งเดียว ไม่ต้องยุ่งกับเชลล์อีก ----------
+if (kind === 'login') {
+  console.log('วางคีย์แล้วกด Enter (ไม่ต้องใส่เครื่องหมายคำพูด ไม่ต้องพิมพ์ export):')
+  const input = readFileSync(0, 'utf8').trim()          // อ่านจาก stdin
+  const bad = whyBad(input)
+  if (bad) { console.error(`\nใช้ค่านี้ไม่ได้ — ${bad}`); process.exit(1) }
+  writeFileSync(KEY_FILE, input + '\n', { mode: 0o600 })
+  console.log(`\nบันทึกแล้ว → ${KEY_FILE.pathname.split('/').pop()} (อ่านได้เฉพาะเจ้าของเครื่อง ไม่เข้า git)`)
+  if (envKey && whyBad(envKey))
+    console.log(`หมายเหตุ: ตัวแปร ${KEY_VAR} ในเชลล์นี้มีค่าที่ใช้ไม่ได้อยู่ สคริปต์จะใช้ค่าจากไฟล์แทนให้เอง`)
+  console.log('ตรวจด้วย:  node scripts/send-test-email.mjs check')
+  process.exit(0)
 }
+
+if (envKey && whyBad(envKey) && key)
+  console.log(`(ข้ามค่าใน ${KEY_VAR} เพราะ${whyBad(envKey)} — ใช้คีย์จากไฟล์ที่บันทึกไว้แทน)`)
 
 // อธิบายคีย์โดยไม่เปิดเผยตัวคีย์ ใช้ตอนหาสาเหตุ 401
 const describeKey = () => key
@@ -334,19 +348,22 @@ const describeKey = () => key
   : 'ไม่มีค่า'
 
 const keyHelp = () => {
-  console.error('\nผู้ให้บริการ: ' + PROVIDER + ' · คีย์ที่ตั้งไว้: ' + describeKey())
+  console.error('\nผู้ให้บริการ: ' + PROVIDER + ' · คีย์จาก' + keySource + ': ' + describeKey())
   console.error('เช็กทีละข้อ:')
   console.error(PROVIDER === 'brevo'
     ? '  1) คีย์ของ Brevo ขึ้นต้นด้วย xkeysib- (SMTP & API → API keys)'
     : '  1) คีย์ของ Resend ขึ้นต้นด้วย re_ ยาวราว 36 ตัวอักษร และโชว์เต็มครั้งเดียวตอนกดสร้าง')
-  console.error(`  2) คัดลอกคีย์ในเบราว์เซอร์แล้วดึงจากคลิปบอร์ด จะไม่พลาดพิมพ์ผิด:`)
-  console.error(`       export ${KEY_VAR}="$(pbpaste)"`)
+  console.error('  2) บันทึกคีย์ใหม่แบบวางทีเดียวจบ:  node scripts/send-test-email.mjs login')
   console.error('  3) ถ้าเพิ่งสร้างคีย์ใหม่ ตรวจว่าไม่ได้ลบคีย์เดิมที่ยังตั้งค้างอยู่ในเชลล์')
 }
 
 // ---------- ตรวจคีย์อย่างเดียว ไม่ส่งอีเมล ----------
 if (kind === 'check') {
-  if (!key) { console.error(`ยังไม่ได้ตั้ง ${KEY_VAR}`); process.exit(1) }
+  if (!key) {
+    console.error(`ยังไม่มีคีย์ที่ใช้ได้ — ${whyBad(envKey) || 'ไม่พบ'}`)
+    console.error('บันทึกคีย์ครั้งเดียวด้วย:  node scripts/send-test-email.mjs login')
+    process.exit(1)
+  }
 
   // Brevo: เช็กว่าคีย์ใช้ได้ และที่อยู่ผู้ส่งผ่านการยืนยัน OTP แล้วหรือยัง
   if (PROVIDER === 'brevo') {
@@ -395,7 +412,7 @@ if (kind === 'check') {
 }
 
 if (!TEMPLATES[kind]) {
-  console.error(`ใช้: node scripts/send-test-email.mjs <${Object.keys(TEMPLATES).join('|')}|check> <อีเมลผู้รับ> [--dry-run|--eml]`)
+  console.error(`ใช้: node scripts/send-test-email.mjs <${Object.keys(TEMPLATES).join('|')}|check|login> <อีเมลผู้รับ> [--dry-run|--eml]`)
   process.exit(1)
 }
 
@@ -454,7 +471,8 @@ if (dryRun) {
 }
 
 if (!key) {
-  console.error(`ไม่พบ ${KEY_VAR} — ตั้งค่าก่อน เช่น  export ${KEY_VAR}="<คีย์ของคุณ>"`)
+  console.error(`ยังไม่มีคีย์ที่ใช้ได้ — ${whyBad(envKey) || 'ไม่พบ'}`)
+  console.error('บันทึกคีย์ครั้งเดียวด้วย:  node scripts/send-test-email.mjs login')
   console.error('หรือดูหน้าตาอีเมลก่อนโดยไม่ต้องส่ง:  node scripts/send-test-email.mjs ' + kind + ' --dry-run')
   process.exit(1)
 }

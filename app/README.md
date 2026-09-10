@@ -233,7 +233,7 @@ curl "$SUPABASE_URL/rest/v1/tender_internal?select=*" \
 | ตัวแปร | ค่าเริ่มต้น | ใช้ทำอะไร |
 |---|---|---|
 | `MAIL_PROVIDER` | `resend` | `resend` (ยืนยันโดเมนด้วย DNS) หรือ `brevo` (ยืนยันรายที่อยู่ด้วย OTP ใช้ส่งทดสอบตอน DNS ยังไม่พร้อม) |
-| `RESEND_API_KEY` / `BREVO_API_KEY` | — | คีย์ของผู้ให้บริการ **ห้ามใส่ในไฟล์ ให้ตั้งใน shell เท่านั้น** |
+| `RESEND_API_KEY` / `BREVO_API_KEY` | — | คีย์ของผู้ให้บริการ — หรือบันทึกครั้งเดียวด้วย `node scripts/send-test-email.mjs login` (เก็บที่ `app/.mail-key-<provider>` สิทธิ์ 600 ไม่เข้า git) **ห้ามพิมพ์ลงในไฟล์โค้ด** |
 | `MAIL_FROM` | `CJx e-Bidding (ทดสอบ) <onboarding@resend.dev>` | ที่อยู่ผู้ส่ง เปลี่ยนเป็น `ฝ่ายจัดซื้อกลาง CJx <noreply.snp@cjmart.co.th>` หลัง Resend ยืนยันโดเมนแล้ว |
 | `MAIL_REPLY_TO` | `procurement@cjmart.co.th` | ที่อยู่รับการตอบกลับ ต้องมีคนอ่านจริง |
 | `APP_URL` | `https://cjx-ebidding.pages.dev` | ปุ่มในอีเมลและรูปโลโก้ (`/cjx-logo.png`) ชี้ไปที่นี่ |
