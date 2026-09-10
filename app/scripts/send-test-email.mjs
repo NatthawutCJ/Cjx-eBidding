@@ -312,6 +312,22 @@ if (key && !/^[\x20-\x7E]+$/.test(key)) {
   process.exit(1)
 }
 
+// ค่าตัวอย่างที่เคยเขียนไว้ในคู่มือ/คำแนะนำ — ถ้าเจอค่าเหล่านี้แปลว่าคัดลอกตัวอย่างมา ไม่ใช่คีย์จริง
+const EXAMPLES = [
+  're_1AbC2dEf_GhIjKlMnOpQrStUvWxYz3456',
+  're_xxxxx', 're_xxxxxxxxxxxx', 're_1234567890',
+  'xkeysib-fake', 'xkeysib-xxxxx',
+]
+if (key && EXAMPLES.includes(key)) {
+  console.error('คีย์ที่ตั้งไว้เป็น "ค่าตัวอย่าง" ที่ยกมาให้ดูรูปแบบ ไม่ใช่คีย์ของบัญชีคุณ')
+  console.error('คีย์จริงต้องคัดลอกจากหน้าเว็บของผู้ให้บริการเท่านั้น ไม่มีใครเดาหรือพิมพ์ให้ได้')
+  console.error('')
+  console.error('วิธีที่พลาดยากที่สุด — คัดลอกคีย์ในเบราว์เซอร์ แล้วรันคำสั่งนี้ (ดึงจากคลิปบอร์ดตรง ๆ):')
+  console.error(`  export ${KEY_VAR}="$(pbpaste)"`)
+  console.error(`  node scripts/send-test-email.mjs check`)
+  process.exit(1)
+}
+
 // อธิบายคีย์โดยไม่เปิดเผยตัวคีย์ ใช้ตอนหาสาเหตุ 401
 const describeKey = () => key
   ? `ยาว ${key.length} ตัวอักษร ขึ้นต้น ${key.slice(0, 6)}… ลงท้าย …${key.slice(-4)}`
@@ -323,8 +339,9 @@ const keyHelp = () => {
   console.error(PROVIDER === 'brevo'
     ? '  1) คีย์ของ Brevo ขึ้นต้นด้วย xkeysib- (SMTP & API → API keys)'
     : '  1) คีย์ของ Resend ขึ้นต้นด้วย re_ ยาวราว 36 ตัวอักษร และโชว์เต็มครั้งเดียวตอนกดสร้าง')
-  console.error(`  2) ครอบด้วยเครื่องหมายคำพูดเสมอ:  export ${KEY_VAR}="<คีย์ของคุณ>"`)
-  console.error('  3) ตรวจว่าคีย์ใช้ได้จริง:  node scripts/send-test-email.mjs check')
+  console.error(`  2) คัดลอกคีย์ในเบราว์เซอร์แล้วดึงจากคลิปบอร์ด จะไม่พลาดพิมพ์ผิด:`)
+  console.error(`       export ${KEY_VAR}="$(pbpaste)"`)
+  console.error('  3) ถ้าเพิ่งสร้างคีย์ใหม่ ตรวจว่าไม่ได้ลบคีย์เดิมที่ยังตั้งค้างอยู่ในเชลล์')
 }
 
 // ---------- ตรวจคีย์อย่างเดียว ไม่ส่งอีเมล ----------
