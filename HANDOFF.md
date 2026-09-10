@@ -46,6 +46,11 @@
 5. **Cloudflare Workers + wrangler ดีพลอยไม่ผ่าน** (มันไป auto-detect ว่าเป็น Vite framework แล้วล้ม) — ใช้ **Pages** เท่านั้น และ framework preset ต้องเป็น **None**
 6. **ซ่อนตัวเลขด้วย CSS blur** ไม่ใช่การซ่อน — ค่ายังอยู่ใน DOM เปิด DevTools อ่านได้ ต้องไม่ render (ใช้ `฿ ——`)
 7. **`throw` ตอนโหลดโมดูลเมื่อ env var หาย** → หน้าขาวไม่มีข้อความ ใช้หน้าจอ `ConfigError` แทน (`main.jsx:8`)
+8. **ทางลัด "ยืนยันเฉพาะที่อยู่ผู้ส่ง" ใช้ไม่ได้กับโดเมนนี้** — Brevo ปฏิเสธตอนกด Add sender
+   ด้วยข้อความ *"Your DMARC policy requires your domain to be authenticated"* เพราะ
+   `_dmarc.cjmart.co.th` ตั้ง `p=quarantine` ผู้ให้บริการยุคนี้จึงไม่ยอมส่งแทนโดเมนที่ยังไม่ยืนยัน
+   → **ไม่มีทางลัด** ถ้าจะส่งในนาม `@cjmart.co.th` ต้องให้ IT เพิ่ม DNS เท่านั้น
+   และ **ห้ามแก้ DMARC เป็น `p=none` เพื่อให้ผ่าน** เพราะเปิดช่องให้คนปลอมอีเมลทั้งบริษัท
 
 ---
 
