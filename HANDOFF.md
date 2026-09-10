@@ -76,6 +76,9 @@
 2. **อีเมลออก** — เลือก Resend แล้ว มีสคริปต์ต้นแบบที่ `app/scripts/send-test-email.mjs` (ส่งได้จริงแล้วผ่าน `onboarding@resend.dev` ถึงอีเมลเจ้าของบัญชี) ที่ค้างอยู่คือ:
    - IT เพิ่ม DNS records ของ Resend (MX + TXT ใต้ `send.cjmart.co.th` และ DKIM) — **ไม่ต้องแก้ SPF เดิมของโดเมนหลักที่เป็น `-all`**
    - กลุ่ม `noreply.snp@cjmart.co.th` (mail-enabled security group) สร้างแล้ว 7 Sep 2026 — ต้องเปิดรับอีเมลจากภายนอก (`RequireSenderAuthenticationEnabled $false`) เพื่อรับการตอบกลับและอีเมลตีกลับ
+   - ทางชั่วคราวระหว่างรอ DNS: ขอสิทธิ์ **Send As** บนกลุ่มให้ผู้ใช้ฝ่ายจัดซื้อ แล้วส่งจาก Outlook ด้วยไฟล์ `.eml`
+     ที่สคริปต์สร้าง (`send-test-email.mjs ... --eml`) — ได้อีเมลจริงในนามบริษัทที่ผ่าน DMARC เพราะออกจาก M365 เอง
+     ต้องให้ผู้มีสิทธิ์ Exchange admin ทำ (`Add-RecipientPermission` หรือ Exchange admin center → Groups → Delegation)
    - เสร็จแล้วตั้ง Supabase → Authentication → SMTP: `smtp.resend.com:587`, user `resend`, pass = API key, sender = `noreply.snp@cjmart.co.th` → ปุ่ม "ลืมรหัสผ่าน" จะใช้งานได้
 3. ตั้ง **custom domain** (แผนเดิมคือ `bidding.cjmart.co.th`) ที่ Cloudflare Pages ก่อนเชิญผู้ขายจริง
 4. ตรวจว่า**งานตัวอย่างจาก `05_seed.sql` ถูกลบออกจาก production แล้ว** ก่อนเปิดใช้จริง (ใช้ปุ่มลบในหน้ารายละเอียดประกาศ — ลบได้เพราะยังไม่มีใครยื่นราคา)
