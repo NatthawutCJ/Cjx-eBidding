@@ -2,7 +2,10 @@
 // ---------------------------------------------------------------------------
 // ส่งอีเมลตัวอย่างผ่าน Resend (ต้นแบบ)
 //
-//   ดูก่อนโดยไม่ต้องมีคีย์:   node scripts/send-test-email.mjs welcome --dry-run
+//   ดูหน้าตาในเบราว์เซอร์:     node scripts/send-test-email.mjs welcome --dry-run
+//   เปิดในโปรแกรมอีเมลจริง:    node scripts/send-test-email.mjs welcome --eml
+//                              (ได้ไฟล์ .eml ที่มีหัวจดหมายเป็น noreply.snp@cjmart.co.th จริง
+//                               เปิดด้วย Mail/Outlook ได้เลย ไม่ต้องมีคีย์ ไม่ต้องมี DNS)
 //   ส่งจริง:                  RESEND_API_KEY=<คีย์ของคุณ> node scripts/send-test-email.mjs welcome you@cjmart.co.th
 //
 // แม่แบบใช้ <table> กับ inline CSS ล้วน ไม่ใช้ flex/grid เพราะ Outlook บนเดสก์ท็อป
@@ -273,6 +276,7 @@ const TEMPLATES = { welcome, invite }
 
 const [kind, ...rest] = process.argv.slice(2)
 const dryRun = rest.includes('--dry-run')
+const asEml  = rest.includes('--eml')
 const to = rest.find(a => a.includes('@'))
 
 // ตัดช่องว่าง/บรรทัดใหม่ที่มักติดมาตอนคัดลอกคีย์
@@ -312,7 +316,7 @@ if (kind === 'check') {
 }
 
 if (!TEMPLATES[kind]) {
-  console.error(`ใช้: node scripts/send-test-email.mjs <${Object.keys(TEMPLATES).join('|')}|check> <อีเมลผู้รับ> [--dry-run]`)
+  console.error(`ใช้: node scripts/send-test-email.mjs <${Object.keys(TEMPLATES).join('|')}|check> <อีเมลผู้รับ> [--dry-run|--eml]`)
   process.exit(1)
 }
 
@@ -330,6 +334,36 @@ console.log(logoOk
        ถ้า URL ของเว็บไม่ใช่อันนี้ ตั้งให้ถูกด้วย  export APP_URL="https://cjx-ebidding.pages.dev/"`)
 
 const mail = TEMPLATES[kind](SAMPLE)
+
+// สร้างไฟล์ .eml เพื่อเปิดดูในโปรแกรมอีเมลจริง — เห็นทั้งชื่อผู้ส่ง หัวเรื่อง และการเรนเดอร์
+// ไม่มีการส่งออกไปที่ใด จึงใช้ที่อยู่ผู้ส่งของบริษัทได้เลยแม้ DNS ยังไม่พร้อม
+if (asEml) {
+  // หัวจดหมายที่มีอักขระไทยต้องเข้ารหัสตาม RFC 2047 ไม่งั้นโปรแกรมอีเมลอ่านเป็นตัวขยะ
+  const enc = t => /[^\x20-\x7E]/.test(t)
+    ? `=?UTF-8?B?${Buffer.from(t, 'utf8').toString('base64')}?=`
+    : t
+  const fromHeader = FROM.replace(/^(.*?)\s*<(.+)>$/, (_, name, addr) => `${enc(name)} <${addr}>`)
+  const body = Buffer.from(mail.html, 'utf8').toString('base64').replace(/(.{76})/g, '$1\r\n')
+  const eml = [
+    `From: ${fromHeader}`,
+    `To: ${to || 'supplier@example.com'}`,
+    `Reply-To: ${REPLY}`,
+    `Subject: ${enc(mail.subject)}`,
+    `Date: ${new Date().toUTCString()}`,
+    'MIME-Version: 1.0',
+    'Content-Type: text/html; charset=UTF-8',
+    'Content-Transfer-Encoding: base64',
+    '', body, '',
+  ].join('\r\n')
+
+  const file = `preview-${kind}.eml`
+  writeFileSync(file, eml)
+  console.log(`ผู้ส่งในไฟล์: ${FROM}`)
+  console.log(`หัวเรื่อง: ${mail.subject}`)
+  console.log(`สำเร็จ — เขียนไฟล์อีเมลแล้ว (ไม่ได้ส่งออกไปที่ใด)`)
+  console.log(`เปิดในโปรแกรมอีเมล:  open ${file}`)
+  process.exit(0)
+}
 
 if (dryRun) {
   const file = `preview-${kind}.html`
