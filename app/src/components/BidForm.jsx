@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { baht, baht2, num, kb, ext, statusOf, stamp } from '../lib/format'
+import { baht, baht2, num, kb, ext, statusOf, stamp, SPEC_NOTE } from '../lib/format'
 import { submitBid, uploadBidFiles } from '../lib/api'
 import { TypeChip, StatusChip, DocList, Req, toast, ICON } from './bits'
 
@@ -180,6 +180,7 @@ export default function BidForm({ t, profile, onDone }) {
           <div className="stack" style={{ gap: '.5rem' }}>
             {t.required_docs.map((d, i) => <Req key={d.id} ok={haveDocs > i}>{d.label}</Req>)}
           </div>
+          <p className="dim" style={{ marginTop: '.4rem' }}>{SPEC_NOTE}</p>
 
           {myBid?.bid_files?.length > 0 && !files.length &&
             <div style={{ marginTop: '.6rem' }}><DocList files={myBid.bid_files} bucket="bid-files" /></div>}

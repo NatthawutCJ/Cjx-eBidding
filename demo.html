@@ -347,7 +347,8 @@ const U = id => users.find(u=>u.id===id) || {name:'—',org:'—'};
 let seq = 100;
 const uid = p => p+(++seq);
 
-const DOCS = ['ใบเสนอราคาลงนาม (PDF)','หนังสือรับรองบริษัท','ภ.พ.20 / ทะเบียนภาษี'];
+const DOCS = ['ใบเสนอราคาลงนาม (PDF)'];        // เอกสารบังคับมีแค่ใบเสนอราคา
+const SPEC_NOTE = 'ถ้ามี Spec สินค้า / แคตตาล็อก / รายละเอียดทางเทคนิค โปรดแนบมาด้วย';
 
 const state = {
   userId: null,
@@ -372,7 +373,7 @@ const state = {
      ]},
     {id:'t2', code:'RFQ_2026_08_021', title:'ข้าวหอมมะลิ 100% ถุง 5 กก. — ไตรมาส 4',
      type:'sealed', budget:4200000, target:3980000, closesAt:T0+2*DAY+3*HOUR, awardedTo:null, unsealedAt:null,
-     buyer:'buy1', invited:['sup1','sup2','sup3'], docs:[...DOCS,'ใบรับรอง GMP/HACCP','ผลตรวจแล็บล็อตล่าสุด'],
+     buyer:'buy1', invited:['sup1','sup2','sup3'], docs:DOCS,
      desc:'ประมูลแบบปิดซอง — ไม่มีใครเห็นราคาของกัน แต่ปรับราคาได้จนหมดเวลา เปิดซองพร้อมกันทีเดียว',
      items:[
        {id:'i1', name:'ข้าวหอมมะลิ 100% ชั้น 1', spec:'ถุงสุญญากาศ 5 กก. อายุ ≥ 9 เดือน', qty:24000, unit:'ถุง'},
@@ -394,7 +395,7 @@ const state = {
   ],
   bids: [
     {id:'b1', tenderId:'t1', supplierId:'sup2', lines:{i1:41.5,i2:39.8,i3:38.2}, docs:[{n:'quotation-buum.pdf',s:284000},{n:'company-cert.pdf',s:1180000},{n:'por-por-20.jpg',s:642000}], note:'ยืนราคา 30 วัน ส่งภายใน 14 วันหลังรับ PO', at:T0-26*MIN, ver:2},
-    {id:'b2', tenderId:'t1', supplierId:'sup3', lines:{i1:42.9,i2:40.5,i3:39.0}, docs:[{n:'ใบเสนอราคา-sanddy.pdf',s:311000},{n:'หนังสือรับรอง.pdf',s:905000}], note:'ราคานี้รวมค่าขนส่งถึง DC บางบัวทอง', at:T0-14*MIN, ver:1},
+    {id:'b2', tenderId:'t1', supplierId:'sup3', lines:{i1:42.9,i2:40.5,i3:39.0}, docs:[{n:'ใบเสนอราคา-sanddy.pdf',s:311000},{n:'Spec-กล่องลูกฟูก-sanddy.pdf',s:905000}], note:'ราคานี้รวมค่าขนส่งถึง DC บางบัวทอง', at:T0-14*MIN, ver:1},
     {id:'b3', tenderId:'t2', supplierId:'sup3', lines:{i1:132.0,i2:98.5}, docs:[{n:'quote-q4-rice.pdf',s:402000},{n:'gmp-haccp.pdf',s:2210000},{n:'lab-report-aug.pdf',s:1540000}], note:'ราคา ณ วันยื่น ปรับตามราคากลางข้าวเปลือกได้หากเกิน 30 วัน', at:T0-6*HOUR, ver:1},
     {id:'b4', tenderId:'t3', supplierId:'sup1', lines:{i1:4150,i2:118}, docs:[{n:'quote-shelf.pdf',s:355000},{n:'cert.pdf',s:880000}], note:'ติดตั้งฟรี 12 สาขา', at:T0-2*DAY, ver:1},
     {id:'b5', tenderId:'t3', supplierId:'sup2', lines:{i1:4380,i2:105}, docs:[{n:'quote-shelf-amm.pdf',s:298000},{n:'cert.pdf',s:1180000}], note:'ส่งของ 21 วัน', at:T0-30*HOUR, ver:1},
@@ -662,6 +663,7 @@ function bidForm(t){
             return `<span class="req ${ok?'ok':'no'}">${ok?ICON.check:ICON.circle}<span>${esc(req)}</span></span>`;
           }).join('')}
         </div>
+        <p class="dim" style="margin-top:.4rem">${SPEC_NOTE}</p>
         ${d.docs.length?`<div class="docs" style="margin-top:.6rem">${d.docs.map((f,i)=>`
           <div class="doc"><span class="ext">${esc(ext(f.n))}</span><span class="n">${esc(f.n)}</span><span class="dim num">${kb(f.s)}</span>
           ${locked?'':`<button type="button" class="btn ghost sm" data-act="rmdoc:${t.id}:${i}" aria-label="ลบไฟล์">ลบ</button>`}</div>`).join('')}</div>`:''}
@@ -705,6 +707,7 @@ function laterDocsCard(t){
           แล้วมีเวลาส่งอีก 3 วัน</div>
         <span class="eyebrow">รายการที่ต้องเตรียมไว้</span>
         ${checklist}
+        <p class="dim">${SPEC_NOTE}</p>
       </div>
     </div>`;
   }
@@ -725,7 +728,7 @@ function laterDocsCard(t){
       ${statusOf(t)==='awarded' ? '<p class="dim">ประกาศผลแล้ว ปิดรับเอกสารเพิ่ม</p>' : `<label class="drop">
         <input type="file" multiple data-act="latefiles:${t.id}" style="position:absolute;opacity:0;width:1px;height:1px">
         <b style="font-family:var(--font-d)">แนบเอกสารประกอบ</b>
-        <span class="dim" style="display:block">ใบเสนอราคาลงนาม, หนังสือรับรอง, ภ.พ.20 — ไม่เกิน 20 MB ต่อไฟล์</span>
+        <span class="dim" style="display:block">ใบเสนอราคาลงนาม และ Spec ถ้ามี — ไม่เกิน 20 MB ต่อไฟล์</span>
       </label>`}
     </div>
   </div>`;
@@ -914,7 +917,8 @@ function viewDetail(){
               <td class="r mono">${it.qty.toLocaleString('th-TH')} ${esc(it.unit)}</td></tr>`).join('')}</tbody>
           </table></div></div>
         <div class="card pad stack"><span class="eyebrow">เอกสารที่ต้องแนบ</span>
-          ${t.docs.map(d=>`<span class="req no">${ICON.circle}<span>${esc(d)}</span></span>`).join('')}</div>
+          ${t.docs.map(d=>`<span class="req no">${ICON.circle}<span>${esc(d)}</span></span>`).join('')}
+          <p class="dim">${SPEC_NOTE}</p></div>
       </div>
       <div class="stack">
         <div id="live-board">${boardCard(t)}</div>

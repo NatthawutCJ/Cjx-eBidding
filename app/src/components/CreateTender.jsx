@@ -1,9 +1,9 @@
 import { useState } from 'react'
 import { createTender, uploadTenderFiles } from '../lib/api'
-import { ext, kb } from '../lib/format'
+import { ext, kb, SPEC_NOTE } from '../lib/format'
 import { ICON, toast } from './bits'
 
-const DEFAULT_DOCS = ['ใบเสนอราคาลงนาม (PDF)', 'หนังสือรับรองบริษัท', 'ภ.พ.20 / ทะเบียนภาษี']
+const DEFAULT_DOCS = ['ใบเสนอราคาลงนาม (PDF)']
 const localDefault = () => {
   const d = new Date(Date.now() + 3 * 86400000); d.setSeconds(0, 0)
   return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16)
@@ -139,6 +139,9 @@ export default function CreateTender({ suppliers, onClose, onCreated }) {
 
           <label className="f"><span>เอกสารที่ซัพพลายเออร์ต้องแนบกลับ (บรรทัดละ 1 รายการ)</span>
             <textarea value={f.docs} onChange={e => set('docs', e.target.value)} /></label>
+          <p className="dim" style={{ marginTop: '-.4rem' }}>
+            ยิ่งขอเอกสารน้อย ผู้ขายยิ่งยื่นราคาง่าย — ระบบจะบอกผู้ขายเองว่า “{SPEC_NOTE}”
+          </p>
 
           <div>
             <span className="eyebrow" style={{ display: 'block', marginBottom: '.4rem' }}>เชิญซัพพลายเออร์</span>

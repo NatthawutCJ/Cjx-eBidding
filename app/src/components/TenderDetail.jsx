@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { getTender, subscribeTender, unsealTender, awardBid, declineInvite, attachBidFiles, uploadBidFiles,
          cancelTender, deleteTender } from '../lib/api'
 import { downloadCSV, tenderComparisonRows } from '../lib/csv'
-import { baht, num, stamp, statusOf, canSeePrices, clock, cdText, docsDueAt, DOCS_GRACE_DAYS } from '../lib/format'
+import { baht, num, stamp, statusOf, canSeePrices, clock, cdText, docsDueAt, DOCS_GRACE_DAYS, SPEC_NOTE } from '../lib/format'
 import { ICON, TypeChip, StatusChip, Countdown, DocList, Req, toast } from './bits'
 import { useState as useLocalState } from 'react'
 import Board from './Board.jsx'
@@ -183,6 +183,7 @@ export default function TenderDetail({ id, profile, onBack }) {
             <div className="card pad stack">
               <span className="eyebrow">เอกสารที่ซัพพลายเออร์ต้องแนบ</span>
               {t.required_docs.map(d => <Req key={d.id} ok={false}>{d.label}</Req>)}
+              <p className="dim">แจ้งผู้ขายเพิ่มว่า “{SPEC_NOTE}”</p>
             </div>
           )}
         </div>
@@ -317,6 +318,7 @@ function LaterDocs({ t, profile, onDone }) {
           </div>
           <span className="eyebrow">รายการที่ต้องเตรียมไว้</span>
           {checklist}
+          <p className="dim">{SPEC_NOTE}</p>
         </div>
       </div>
     )
@@ -353,6 +355,7 @@ function LaterDocs({ t, profile, onDone }) {
             : <><b>ปิดรับราคาแล้ว กรุณาส่งเอกสารภายใน {cdText(dueAt - Date.now())}</b> — ครบกำหนด {stamp(dueAt)} ไม่ส่งตามกำหนดถือว่าสละสิทธิ์</>}
         </div>
         {checklist}
+        <p className="dim">{SPEC_NOTE}</p>
         {have > 0 && <DocList files={myBid.bid_files} bucket="bid-files" />}
         {st === 'awarded'
           ? <p className="dim">ประกาศผลแล้ว ปิดรับเอกสารเพิ่ม</p>

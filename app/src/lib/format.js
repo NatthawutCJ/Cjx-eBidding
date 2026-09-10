@@ -37,5 +37,7 @@ export const canSeePrices = t => t.type === 'open' || !!t.unsealed_at
 
 // ส่งเอกสารประกอบได้ภายใน 3 วันหลังปิดรับราคา (ทั้งงานปิดและเปิด) — แก้ตัวเลขนี้ที่เดียว
 export const DOCS_GRACE_DAYS = 3
+// เอกสารบังคับมีแค่ใบเสนอราคา ส่วน Spec เป็นของแถมที่ช่วยให้จัดซื้อตัดสินใจได้เร็วขึ้น
+export const SPEC_NOTE = 'ถ้ามี Spec สินค้า / แคตตาล็อก / รายละเอียดทางเทคนิค โปรดแนบมาด้วย'
 export const docsDueAt = t => new Date(t.closes_at).getTime() + DOCS_GRACE_DAYS * DAY
 export const bidTotal = b => Number(b.total) || 0

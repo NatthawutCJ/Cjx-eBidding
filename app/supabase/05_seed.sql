@@ -91,10 +91,9 @@ begin
     (v_open,'ถุงหูหิ้ว HDPE 6x11 นิ้ว','หนา 0.020 มม.',12000,'กก.',0),
     (v_open,'ถุงหูหิ้ว HDPE 9x18 นิ้ว','หนา 0.025 มม.',9000,'กก.',1),
     (v_open,'ถุงหูหิ้ว HDPE 12x20 นิ้ว','หนา 0.030 มม.',6500,'กก.',2);
+  -- เอกสารบังคับมีแค่ใบเสนอราคา (Spec แนบเพิ่มได้ถ้ามี ระบบแจ้งผู้ขายเอง)
   insert into public.tender_required_docs (tender_id,label,sort) values
-    (v_open,'ใบเสนอราคาลงนาม (PDF)',0),
-    (v_open,'หนังสือรับรองบริษัท',1),
-    (v_open,'ภ.พ.20 / ทะเบียนภาษี',2);
+    (v_open,'ใบเสนอราคาลงนาม (PDF)',0);
   insert into public.tender_invites (tender_id, supplier_id)
     select v_open, id from public.suppliers;
   insert into public.tender_events (tender_id, actor_id, kind, message)
@@ -113,9 +112,7 @@ begin
     (v_sealed,'ข้าวหอมมะลิ 100% ชั้น 1','ถุงสุญญากาศ 5 กก.',24000,'ถุง',0),
     (v_sealed,'ข้าวหอมมะลิผสม 70%','ถุง 5 กก. พิมพ์แบรนด์ร่วม',18000,'ถุง',1);
   insert into public.tender_required_docs (tender_id,label,sort) values
-    (v_sealed,'ใบเสนอราคาลงนาม (PDF)',0),
-    (v_sealed,'หนังสือรับรองบริษัท',1),
-    (v_sealed,'ใบรับรอง GMP/HACCP',2);
+    (v_sealed,'ใบเสนอราคาลงนาม (PDF)',0);
   insert into public.tender_invites (tender_id, supplier_id)
     select v_sealed, id from public.suppliers;
 
