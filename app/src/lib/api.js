@@ -149,12 +149,25 @@ export async function getTender(id) {
 }
 
 // ============================ ไฟล์แนบ ============================
-const safe = name => name.replace(/[^\w.\-ก-๙ ]+/g, '_').slice(-80)
+// ชื่อไฟล์ที่ใช้เป็น "คีย์" ใน Supabase Storage ต้องเป็น ASCII เท่านั้น
+// ภาษาไทยหรืออักขระพิเศษจะโดนปฏิเสธด้วย error "Invalid key" (เจอจริงกับไฟล์ชื่อ "...บริษัท ซีเจ มาร์ท จำกัด.pdf")
+// ชื่อจริงไม่หาย — เก็บไว้ในคอลัมน์ file_name ของฐานข้อมูล ใช้แสดงผลและตอนดาวน์โหลด
+const rand = () => Math.random().toString(36).slice(2, 6)
+const safe = name => {
+  const dot = name.lastIndexOf('.')
+  const ext = dot > 0 ? name.slice(dot + 1).toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 8) : ''
+  const base = (dot > 0 ? name.slice(0, dot) : name)
+    .replace(/[^\w.\-]+/g, '-')     // \w = A-Z a-z 0-9 _ เท่านั้น (ไม่รวมไทย)
+    .replace(/-+/g, '-')
+    .replace(/^[-.]+|[-.]+$/g, '')
+    .slice(0, 60)
+  return (base || 'file') + (ext ? '.' + ext : '')
+}
 
 export async function uploadBidFiles(tenderId, supplierId, files) {
   const out = []
   for (const f of files) {
-    const path = `${tenderId}/${supplierId}/${Date.now()}-${safe(f.name)}`
+    const path = `${tenderId}/${supplierId}/${Date.now()}-${rand()}-${safe(f.name)}`
     const { error } = await supabase.storage.from('bid-files').upload(path, f, { upsert: false })
     if (error) throw new Error(`อัปโหลด ${f.name} ไม่สำเร็จ: ${error.message}`)
     out.push({ file_name: f.name, file_path: path, size_bytes: f.size })
@@ -165,7 +178,7 @@ export async function uploadBidFiles(tenderId, supplierId, files) {
 export async function uploadTenderFiles(tenderId, files) {
   const rows = []
   for (const f of files) {
-    const path = `${tenderId}/${Date.now()}-${safe(f.name)}`
+    const path = `${tenderId}/${Date.now()}-${rand()}-${safe(f.name)}`
     const { error } = await supabase.storage.from('tender-files').upload(path, f)
     if (error) throw new Error(`อัปโหลด ${f.name} ไม่สำเร็จ: ${error.message}`)
     rows.push({ tender_id: tenderId, file_name: f.name, file_path: path, size_bytes: f.size })
@@ -177,8 +190,10 @@ export async function uploadTenderFiles(tenderId, files) {
   return rows
 }
 
-export async function fileUrl(bucket, path) {
-  const { data, error } = await supabase.storage.from(bucket).createSignedUrl(path, 120)
+export async function fileUrl(bucket, path, downloadAs) {
+  // downloadAs = ชื่อไฟล์เดิมของผู้ใช้ (ภาษาไทยได้) ให้ดาวน์โหลดออกมาแล้วชื่อไม่เพี้ยน
+  const opts = downloadAs ? { download: downloadAs } : undefined
+  const { data, error } = await supabase.storage.from(bucket).createSignedUrl(path, 120, opts)
   if (error) throw new Error('เปิดไฟล์ไม่ได้: ' + error.message)
   return data.signedUrl
 }

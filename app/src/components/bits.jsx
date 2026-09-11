@@ -87,7 +87,7 @@ export function Countdown({ t, className = '' }) {
 export function DocList({ files, bucket, empty = 'ยังไม่มีเอกสารแนบ' }) {
   if (!files || !files.length) return <p className="dim">{empty}</p>
   const open = async f => {
-    try { window.open(await fileUrl(bucket, f.file_path), '_blank', 'noopener') }
+    try { window.open(await fileUrl(bucket, f.file_path, f.file_name), '_blank', 'noopener') }
     catch (e) { toast('เปิดไฟล์ไม่ได้', e.message, 'crit') }
   }
   return (
