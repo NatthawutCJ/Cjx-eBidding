@@ -507,6 +507,9 @@ git push">คัดลอก</button></div>
     <tbody>
       <tr><td>ขึ้นว่า “ยังไม่ได้ตั้งค่า VITE_SUPABASE_URL”</td><td>ไม่มีไฟล์ .env หรือชื่อตัวแปรผิด</td><td>ตรวจว่าไฟล์ชื่อ <code>.env</code> อยู่ในโฟลเดอร์ <code>app</code> แล้วปิด <code>npm run dev</code> เปิดใหม่</td></tr>
       <tr><td>เข้าสู่ระบบไม่ได้ บอกว่าอีเมลหรือรหัสผ่านไม่ถูกต้อง</td><td>ตอนสร้างผู้ใช้ไม่ได้ติ๊ก Auto Confirm</td><td>Authentication → คลิกผู้ใช้ → Confirm email หรือลบแล้วสร้างใหม่ให้ติ๊กด้วย</td></tr>
+      <tr><td>กดสร้างประกาศแล้วขึ้น <code>null value in column "budget" ... violates not-null constraint</code></td>
+        <td>ตาราง <code>tenders</code> เป็นโครงเก่า (ยังมีคอลัมน์ budget) แต่ฟังก์ชัน <code>create_tender()</code> เป็นตัวใหม่ที่เขียนงบลง <code>tender_internal</code> แทน — เกิดเมื่อ schema กับ function มาจากคนละรุ่น</td>
+        <td>รัน <code>12_hide_budget.sql</code> → <code>14_open_period.sql</code> → <code>16_remark.sql</code> ตามลำดับ (ไฟล์หลังมี <code>create_tender()</code> รุ่นใหม่กว่า จึงต้องรันทีหลังเสมอ) แล้วตรวจด้วย <code>13_verify_install.sql</code></td></tr>
       <tr><td>กดยื่นราคาแล้วขึ้น <code>record "v_t" has no field "cancelled_at"</code></td>
         <td>ยังไม่ได้รัน <code>10_manage_tender.sql</code> ตาราง <code>tenders</code> จึงไม่มีคอลัมน์ที่ <code>submit_bid</code> เรียกใช้</td>
         <td>รัน <code>10_manage_tender.sql</code> แล้วลองยื่นอีกครั้ง — อยากรู้ว่าขาดไฟล์ไหนอีกให้รัน <code>13_verify_install.sql</code> ซึ่งไล่ตรวจให้ทั้งหมด</td></tr>

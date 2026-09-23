@@ -1,9 +1,17 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { createTender, uploadTenderFiles, tenderTimes } from '../lib/api'
 import { ext, kb, stamp, SPEC_NOTE } from '../lib/format'
 import { ICON, toast } from './bits'
 
 const DEFAULT_DOCS = ['ใบเสนอราคาลงนาม (PDF)']
+
+// เก็บแบบร่างไว้ในเครื่องผู้ใช้ กันพิมพ์ยาวแล้วกดปิดพลาด/รีเฟรชแล้วหายทั้งหมด
+// เก็บเฉพาะข้อความและตัวเลือก — ไฟล์แนบเก็บไม่ได้ (เป็นอ็อบเจกต์ File ของเบราว์เซอร์)
+const DRAFT_KEY = 'cjx-tender-draft'
+const readDraft = () => {
+  try { return JSON.parse(localStorage.getItem(DRAFT_KEY) || 'null') } catch { return null }
+}
+const clearDraft = () => { try { localStorage.removeItem(DRAFT_KEY) } catch { /* โหมดส่วนตัว */ } }
 // ค่าเวลาสำหรับ <input type="datetime-local"> ต้องเป็นเวลาท้องถิ่น ไม่ใช่ UTC
 const localAt = msFromNow => {
   const d = new Date(Date.now() + msFromNow); d.setSeconds(0, 0)
@@ -11,16 +19,47 @@ const localAt = msFromNow => {
 }
 
 export default function CreateTender({ suppliers, onClose, onCreated }) {
-  const [f, setF] = useState({
+  // อ่านแบบร่างครั้งเดียวตอนเปิดฟอร์ม ไม่ใช่ทุก render (ไม่งั้นเวลาที่โชว์จะขยับตามการพิมพ์)
+  const [draft] = useState(readDraft)
+
+  // ต้องเอาค่าตั้งต้นรองไว้เสมอ แบบร่างเก่าอาจไม่มีช่องที่เพิ่งเพิ่มเข้ามา (เช่น remark)
+  // ถ้าเอาแบบร่างมาใช้ตรง ๆ ช่องใหม่จะเป็น undefined แล้วหน้าจอพังตอนเรียก .trim()
+  const blank = () => ({
     title: '', type: 'sealed', budget: '', target_price: '',
     opens_at: localAt(0), closes_at: localAt(3 * 86400000), docs: DEFAULT_DOCS.join('\n'),
     remark: '',
   })
-  const [items, setItems] = useState([{ name: '', spec: '', qty: '', unit: 'ชิ้น' }])
-  const [invited, setInvited] = useState(suppliers.map(s => s.id))
+  const [f, setF] = useState({ ...blank(), ...(draft?.f || {}) })
+  const [items, setItems] = useState(
+    Array.isArray(draft?.items) && draft.items.length
+      ? draft.items
+      : [{ name: '', spec: '', qty: '', unit: 'ชิ้น' }])
+  // ผู้ขายที่ถูกลบไปหลังบันทึกแบบร่างต้องไม่ติดมาด้วย
+  const [invited, setInvited] = useState(
+    Array.isArray(draft?.invited)
+      ? draft.invited.filter(id => suppliers.some(s => s.id === id))
+      : suppliers.map(s => s.id))
   const [files, setFiles] = useState([])
   const [busy, setBusy] = useState(false)
+  const [restored, setRestored] = useState(!!draft)
   const set = (k, v) => setF({ ...f, [k]: v })
+
+  // บันทึกแบบร่างทุกครั้งที่มีการพิมพ์ (เฉพาะตอนที่กรอกอะไรไปแล้ว)
+  useEffect(() => {
+    const touched = f.title.trim() || f.budget || f.remark.trim() || items.some(i => i.name.trim())
+    if (!touched) return
+    try { localStorage.setItem(DRAFT_KEY, JSON.stringify({ f, items, invited, at: Date.now() })) }
+    catch { /* พื้นที่เต็มหรือโหมดส่วนตัว — ไม่ใช่เรื่องคอขาดบาดตาย */ }
+  }, [f, items, invited])
+
+  function resetForm() {
+    clearDraft()
+    setF(blank())
+    setItems([{ name: '', spec: '', qty: '', unit: 'ชิ้น' }])
+    setInvited(suppliers.map(s => s.id))
+    setFiles([])
+    setRestored(false)
+  }
 
   async function onSubmit(e) {
     e.preventDefault()
@@ -50,6 +89,7 @@ export default function CreateTender({ suppliers, onClose, onCreated }) {
       const saved = await tenderTimes(id)
       const wanted = new Date(f.opens_at).getTime()
       if (saved && Math.abs(new Date(saved.opens_at).getTime() - wanted) > 3 * 60000) {
+        clearDraft()
         toast('ประกาศแล้ว แต่เวลาเปิดรับไม่ถูกบันทึก',
           `ระบบบันทึกเป็น ${stamp(saved.opens_at)} แทน ${stamp(f.opens_at)} — ` +
           'ฐานข้อมูลยังไม่ได้ติดตั้ง 14_open_period.sql ให้ผู้ดูแลรันไฟล์นี้ใน SQL Editor แล้วสร้างประกาศใหม่', 'crit')
@@ -57,6 +97,7 @@ export default function CreateTender({ suppliers, onClose, onCreated }) {
         return
       }
 
+      clearDraft()
       toast('ประกาศแล้ว', `แจ้งเตือนซัพพลายเออร์ ${invited.length} ราย`, 'good')
       onCreated(id)
     } catch (err) {
@@ -69,6 +110,17 @@ export default function CreateTender({ suppliers, onClose, onCreated }) {
       <form className="sheet" onSubmit={onSubmit}>
         <header><h2>สร้างประกาศเชิญประมูล</h2>
           <button type="button" className="btn ghost sm" onClick={onClose}>ปิด</button></header>
+
+        {restored && (
+          <div className="rule" style={{ margin: '0 1rem', borderLeftColor: 'var(--warn)',
+                                         background: 'var(--warn-wash)' }}>
+            <div className="spread" style={{ gap: '.6rem' }}>
+              <span><b>กู้แบบร่างที่ค้างไว้มาให้แล้ว</b> — ที่พิมพ์ไว้ครั้งก่อนยังอยู่ครบ
+                {draft?.at && ` (บันทึกเมื่อ ${stamp(draft.at)})`} ยกเว้นไฟล์แนบที่ต้องเลือกใหม่</span>
+              <button type="button" className="btn sm" onClick={resetForm}>เริ่มใหม่ทั้งหมด</button>
+            </div>
+          </div>
+        )}
 
         <div className="body">
           <label className="f"><span>ชื่องาน / รายการจัดซื้อ</span>
@@ -185,7 +237,17 @@ export default function CreateTender({ suppliers, onClose, onCreated }) {
           </p>
 
           <div>
-            <span className="eyebrow" style={{ display: 'block', marginBottom: '.4rem' }}>เชิญซัพพลายเออร์</span>
+            <div className="spread" style={{ marginBottom: '.4rem' }}>
+              <span className="eyebrow">เชิญซัพพลายเออร์ ({invited.length}/{suppliers.length})</span>
+              <span className="row" style={{ gap: '.35rem' }}>
+                <button type="button" className="btn ghost sm"
+                        disabled={invited.length === suppliers.length}
+                        onClick={() => setInvited(suppliers.map(s => s.id))}>เลือกทั้งหมด</button>
+                <button type="button" className="btn ghost sm"
+                        disabled={invited.length === 0}
+                        onClick={() => setInvited([])}>เอาออกทั้งหมด</button>
+              </span>
+            </div>
             <div className="checks">
               {suppliers.map(s => (
                 <label key={s.id}>

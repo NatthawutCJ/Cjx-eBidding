@@ -1110,7 +1110,13 @@ function sheetCreate(){
       <p class="dim" style="margin-top:-.4rem">${ICON.eye} ผู้ขายที่ถูกเชิญทุกรายอ่านข้อความนี้ได้ — <b>ห้ามใส่งบประมาณหรือราคาคาดหวัง</b></p>
       <label class="f"><span>เอกสารที่ซัพพลายเออร์ต้องแนบกลับ (บรรทัดละ 1 รายการ)</span><textarea data-nt="docs">${esc(newT.docs)}</textarea></label>
       <div>
-        <span class="eyebrow" style="display:block;margin-bottom:.4rem">เชิญซัพพลายเออร์</span>
+        <div class="spread" style="margin-bottom:.4rem">
+          <span class="eyebrow">เชิญซัพพลายเออร์ (${newT.invited.length}/${users.filter(u=>u.role==='supplier').length})</span>
+          <span class="row" style="gap:.35rem">
+            <button type="button" class="btn ghost sm" data-act="invall">เลือกทั้งหมด</button>
+            <button type="button" class="btn ghost sm" data-act="invnone">เอาออกทั้งหมด</button>
+          </span>
+        </div>
         <div class="checks">${users.filter(u=>u.role==='supplier').map(u=>`
           <label><input type="checkbox" data-inv="${u.id}" ${newT.invited.includes(u.id)?'checked':''}>${esc(u.org)} <span class="dim">${u.code}</span></label>`).join('')}</div>
       </div>
@@ -1255,6 +1261,12 @@ document.addEventListener('click', e=>{
   const el = e.target.closest('[data-act]');
   if (!el) return;
   const [act, a, b] = el.dataset.act.split(':');
+
+  if (act==='invall' || act==='invnone'){
+    readCreate();
+    newT.invited = act==='invall' ? users.filter(u=>u.role==='supplier').map(u=>u.id) : [];
+    render(); return;
+  }
 
   if (act==='login'){
     state.userId = a;
