@@ -77,7 +77,8 @@ app/
 │   └── 18_rebuild_profiles.sql  กู้บัญชีที่เด้งออกทั้งหมด จากร่องรอยในฐานข้อมูล
 ├── scripts/
 │   ├── send-test-email.mjs      ส่งอีเมลตัวอย่างผ่าน Resend (ต้นแบบ) + โหมด --dry-run ดูหน้าตาก่อนส่ง
-│   └── check-mail-dns.mjs       ตรวจว่า DNS สำหรับส่งอีเมลพร้อมหรือยัง (ใช้ตอนรอ IT)
+│   ├── check-mail-dns.mjs       ตรวจว่า DNS สำหรับส่งอีเมลพร้อมหรือยัง (ใช้ตอนรอ IT)
+│   └── backup-db.sh             สำรองฐานข้อมูลลงเครื่อง (แพ็กเกจฟรีไม่มี backup ให้)
 ├── src/
 │   ├── styles.css         ธีมทั้งระบบ (สี ฟอนต์ ระยะ) — แก้ที่ :root ที่เดียว
 │   ├── lib/supabase.js    สร้าง client จาก .env

@@ -5,3 +5,5 @@ dist
 preview-*.html
 preview-*.eml
 .mail-key-*
+backups/
+.db-url
