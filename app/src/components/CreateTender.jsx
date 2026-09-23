@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import { createTender, uploadTenderFiles } from '../lib/api'
-import { ext, kb, SPEC_NOTE } from '../lib/format'
+import { createTender, uploadTenderFiles, tenderTimes } from '../lib/api'
+import { ext, kb, stamp, SPEC_NOTE } from '../lib/format'
 import { ICON, toast } from './bits'
 
 const DEFAULT_DOCS = ['ใบเสนอราคาลงนาม (PDF)']
@@ -42,6 +42,19 @@ export default function CreateTender({ suppliers, onClose, onCreated }) {
         invited,
       })
       if (files.length) await uploadTenderFiles(id, files)   // อัปโหลดหลังได้ tender id
+
+      // ถ้าฐานข้อมูลยังไม่ได้รัน 14_open_period.sql มันจะเมินเวลาเปิดที่กรอกแล้วใช้ now() แทน
+      // เงียบ ๆ โดยไม่ error — ต้องจับตรงนี้ ไม่งั้นประกาศจะเปิดรับทันทีทั้งที่ตั้งเวลาไว้
+      const saved = await tenderTimes(id)
+      const wanted = new Date(f.opens_at).getTime()
+      if (saved && Math.abs(new Date(saved.opens_at).getTime() - wanted) > 3 * 60000) {
+        toast('ประกาศแล้ว แต่เวลาเปิดรับไม่ถูกบันทึก',
+          `ระบบบันทึกเป็น ${stamp(saved.opens_at)} แทน ${stamp(f.opens_at)} — ` +
+          'ฐานข้อมูลยังไม่ได้ติดตั้ง 14_open_period.sql ให้ผู้ดูแลรันไฟล์นี้ใน SQL Editor แล้วสร้างประกาศใหม่', 'crit')
+        onCreated(id)
+        return
+      }
+
       toast('ประกาศแล้ว', `แจ้งเตือนซัพพลายเออร์ ${invited.length} ราย`, 'good')
       onCreated(id)
     } catch (err) {

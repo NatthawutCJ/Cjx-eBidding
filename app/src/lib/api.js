@@ -213,6 +213,14 @@ export const declineInvite = id     => rpc('decline_invite', { p_tender: id })
 export const attachBidFiles = (tenderId, files) =>
   rpc('attach_bid_files', { p_tender: tenderId, p_files: files })
 export const createTender = payload => rpc('create_tender', { p: payload })
+
+// อ่านเวลาที่ฐานข้อมูลบันทึกจริง ใช้ตรวจว่า create_tender() รับค่า opens_at ไปหรือเปล่า
+export async function tenderTimes(id) {
+  const { data, error } = await supabase.from('tenders')
+    .select('opens_at, closes_at').eq('id', id).maybeSingle()
+  if (error) return null
+  return data
+}
 export const cancelTender  = (id, reason) => rpc('cancel_tender', { p_tender: id, p_reason: reason })
 
 // ลบประกาศ: เอาไฟล์ TOR ออกจาก storage ก่อน แล้วค่อยลบข้อมูล
