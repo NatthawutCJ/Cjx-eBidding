@@ -24,7 +24,11 @@ export function TenderRow({ t, profile, onOpen }) {
       </span>
       <span className="r">
         <Countdown t={t} />
-        <span className="dim">ปิดรับ {stamp(t.closes_at)}</span>
+        <span className="dim">
+          {statusOf(t) === 'scheduled'
+            ? `เปิดรับ ${stamp(t.opens_at)}`
+            : `ปิดรับ ${stamp(t.closes_at)}`}
+        </span>
       </span>
     </button>
   )

@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { baht, baht2, num, kb, ext, statusOf, stamp, SPEC_NOTE } from '../lib/format'
 import { submitBid, uploadBidFiles } from '../lib/api'
-import { TypeChip, StatusChip, DocList, Req, toast, ICON } from './bits'
+import { TypeChip, StatusChip, DocList, Req, Countdown, toast, ICON } from './bits'
 
 export default function BidForm({ t, profile, onDone }) {
   const myBid = t.bids.find(b => b.supplier_id === profile.supplier_id)
@@ -41,6 +41,25 @@ export default function BidForm({ t, profile, onDone }) {
     t.items.forEach(it => { next[it.id] = String(Math.floor(Number(lines[it.id]) * f * 100) / 100) })
     setLines(next)
     toast(mode === 'beat' ? `ตั้งราคาต่ำกว่าอันดับ 1 อยู่ ${pct}%` : `ลดราคาลง ${pct}%`, 'ตรวจแล้วกดหยอดราคา')
+  }
+
+  // ---------- ยังไม่ถึงเวลาเปิดรับ: ดูรายละเอียดได้ แต่ยังยื่นราคาไม่ได้ ----------
+  if (st === 'scheduled') {
+    return (
+      <div className="card">
+        <header><h3>ใบเสนอราคาของคุณ</h3><StatusChip t={t} /></header>
+        <div className="body stack">
+          <div className="rule">
+            <b>ยังไม่เปิดรับราคา</b> — ระบบจะเปิดให้ยื่นราคาเวลา {stamp(t.opens_at)}
+            และปิดรับ {stamp(t.closes_at)}
+          </div>
+          <div className="spread"><span className="muted">เปิดรับในอีก</span>
+            <b style={{ fontSize: '1.15rem' }}><Countdown t={t} /></b></div>
+          <p className="dim">ระหว่างนี้ดูรายการที่ต้องเสนอราคาและดาวน์โหลดเอกสารจากผู้ซื้อได้เลย
+            จะได้เตรียมราคาไว้ล่วงหน้า</p>
+        </div>
+      </div>
+    )
   }
 
   // ---------- ปิดรับแล้ว: แสดงสรุปเท่านั้น ----------

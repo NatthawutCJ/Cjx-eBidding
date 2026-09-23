@@ -35,6 +35,7 @@ export function tenderComparisonRows(t) {
   rows.push(['ประเภท', t.type === 'sealed' ? 'ปิดราคา' : 'เปิดราคา'])
   if (t.budget != null) rows.push(['งบประมาณ', t.budget])
   if (t.target_price != null) rows.push(['ราคาคาดหวัง (ภายใน)', t.target_price])
+  rows.push(['เปิดรับราคา', d(t.opens_at)])
   rows.push(['ปิดรับราคา', d(t.closes_at)])
   if (t.unsealed_at) rows.push(['เปิดซอง', d(t.unsealed_at)])
   if (t.cancelled_at) rows.push(['ยกเลิกเมื่อ', d(t.cancelled_at), t.cancel_reason || ''])
@@ -70,7 +71,7 @@ export function tenderListRows(tenders, statusLabel) {
   const withBudget = tenders.some(t => t.budget != null)
   const rows = [[
     'เลขที่ประกาศ', 'ชื่องาน', 'ประเภท', 'สถานะ', ...(withBudget ? ['งบประมาณ'] : []),
-    'จำนวนรายการ', 'ผู้ถูกเชิญ', 'ใบเสนอราคา', 'ปิดรับราคา', 'สร้างเมื่อ',
+    'จำนวนรายการ', 'ผู้ถูกเชิญ', 'ใบเสนอราคา', 'เปิดรับราคา', 'ปิดรับราคา', 'สร้างเมื่อ',
   ]]
   tenders.forEach(t => rows.push([
     t.code, t.title,
@@ -80,21 +81,21 @@ export function tenderListRows(tenders, statusLabel) {
     (t.items || []).length,
     (t.tender_invites || []).length,
     t.bid_count ?? '',
-    d(t.closes_at), d(t.created_at),
+    d(t.opens_at), d(t.closes_at), d(t.created_at),
   ]))
   return rows
 }
 
 // ---------- ประวัติการยื่นราคาของผู้ขาย ----------
 export function myBidRows(tenders, statusLabel) {
-  const rows = [['เลขที่ประกาศ', 'ชื่องาน', 'ประเภท', 'สถานะงาน', 'ราคาที่ยื่น', 'ผลการพิจารณา', 'ปิดรับราคา']]
+  const rows = [['เลขที่ประกาศ', 'ชื่องาน', 'ประเภท', 'สถานะงาน', 'ราคาที่ยื่น', 'ผลการพิจารณา', 'เปิดรับราคา', 'ปิดรับราคา']]
   tenders.filter(t => t.my_bid).forEach(t => rows.push([
     t.code, t.title,
     t.type === 'sealed' ? 'ปิดราคา' : 'เปิดราคา',
     statusLabel(t),
     t.my_bid.total,
     t.my_bid_won ? 'ชนะ' : t.awarded_bid_id ? 'ไม่ได้รับเลือก' : 'รอผล',
-    d(t.closes_at),
+    d(t.opens_at), d(t.closes_at),
   ]))
   return rows
 }

@@ -78,9 +78,11 @@ export function Countdown({ t, className = '' }) {
     return () => clearInterval(id)
   }, [])
   if (statusOf(t) === 'awarded') return <span className={'cd over ' + className}>ประกาศผลแล้ว</span>
-  const ms = new Date(t.closes_at) - Date.now()
+  // ก่อนถึงเวลาเปิด ให้นับถอยหลังไปหา "เวลาเปิดรับ" ไม่ใช่เวลาปิด
+  const sched = statusOf(t) === 'scheduled'
+  const ms = new Date(sched ? t.opens_at : t.closes_at) - Date.now()
   const cls = ms <= 0 ? 'over' : ms < 60 * MIN ? 'soon' : ''
-  return <span className={`cd ${cls} ${className}`}>{cdText(ms)}</span>
+  return <span className={`cd ${cls} ${className}`}>{sched ? 'เปิดรับในอีก ' + cdText(ms) : cdText(ms)}</span>
 }
 
 // ---------------- เอกสารแนบ ----------------

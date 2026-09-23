@@ -53,9 +53,11 @@ export default function TenderDetail({ id, profile, onBack }) {
           )}
         </div>
         <div className="stack" style={{ gap: '.25rem', alignItems: 'flex-end', textAlign: 'right' }}>
-          <span className="eyebrow">{st === 'live' ? 'เหลือเวลา' : 'เวลาปิดรับ'}</span>
+          <span className="eyebrow">
+            {st === 'live' ? 'เหลือเวลา' : st === 'scheduled' ? 'ยังไม่เปิดรับ' : 'เวลาปิดรับ'}</span>
           <span style={{ fontSize: '1.2rem' }}><Countdown t={t} /></span>
-          <span className="dim">{stamp(t.closes_at)}</span>
+          <span className="dim">เปิดรับ {stamp(t.opens_at)}</span>
+          <span className="dim">ปิดรับ {stamp(t.closes_at)}</span>
         </div>
       </div>
 

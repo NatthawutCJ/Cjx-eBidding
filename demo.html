@@ -363,7 +363,7 @@ const state = {
   events: [],
   tenders: [
     {id:'t1', code:'RFQ_2026_08_014', title:'ถุงหูหิ้วพลาสติก HDPE 6 ขนาด (ล็อต ก.ย.)',
-     type:'open', budget:1850000, target:1100000, closesAt:T0+41*MIN+18000, awardedTo:null, unsealedAt:null,
+     type:'open', budget:1850000, target:1100000, opensAt:T0-2*DAY, closesAt:T0+41*MIN+18000, awardedTo:null, unsealedAt:null,
      buyer:'buy1', invited:['sup1','sup2','sup3'], docs:DOCS,
      desc:'ประมูลแบบเปิด — เห็นราคาคู่แข่งแบบเรียลไทม์ ปรับราคาได้ไม่จำกัดจนหมดเวลา',
      items:[
@@ -372,7 +372,7 @@ const state = {
        {id:'i3', name:'ถุงหูหิ้ว HDPE 12x20 นิ้ว',spec:'หนา 0.030 มม. บรรจุ 1 กก./แพ็ค', qty:6500,  unit:'กก.'},
      ]},
     {id:'t2', code:'RFQ_2026_08_021', title:'ข้าวหอมมะลิ 100% ถุง 5 กก. — ไตรมาส 4',
-     type:'sealed', budget:4200000, target:3980000, closesAt:T0+2*DAY+3*HOUR, awardedTo:null, unsealedAt:null,
+     type:'sealed', budget:4200000, target:3980000, opensAt:T0-1*DAY, closesAt:T0+2*DAY+3*HOUR, awardedTo:null, unsealedAt:null,
      buyer:'buy1', invited:['sup1','sup2','sup3'], docs:DOCS,
      desc:'ประมูลแบบปิดซอง — ไม่มีใครเห็นราคาของกัน แต่ปรับราคาได้จนหมดเวลา เปิดซองพร้อมกันทีเดียว',
      items:[
@@ -380,7 +380,7 @@ const state = {
        {id:'i2', name:'ข้าวหอมมะลิผสม 70%',      spec:'ถุง 5 กก. พิมพ์แบรนด์ร่วม',        qty:18000, unit:'ถุง'},
      ]},
     {id:'t3', code:'RFQ_2026_08_002', title:'ชั้นวางสินค้าเหล็ก 4 ชั้น — สาขาใหม่ 12 สาขา',
-     type:'sealed', budget:2640000, target:2200000, closesAt:T0-3*HOUR, awardedTo:null, unsealedAt:null,
+     type:'sealed', budget:2640000, target:2200000, opensAt:T0-4*DAY, closesAt:T0-3*HOUR, awardedTo:null, unsealedAt:null,
      buyer:'buy1', invited:['sup1','sup2','sup3'], docs:DOCS,
      desc:'ปิดรับราคาแล้ว รอฝ่ายจัดซื้อกดเปิดซองเพื่อเปรียบเทียบ',
      items:[
@@ -388,7 +388,7 @@ const state = {
        {id:'i2', name:'ป้ายราคาหน้าชั้น',          spec:'อะคริลิกใส ยาว 120 ซม.',            qty:1440,unit:'เส้น'},
      ]},
     {id:'t4', code:'RFQ_2026_07_118', title:'บริการขนส่งควบคุมอุณหภูมิ เขตภาคกลาง',
-     type:'open', budget:3000000, target:2700000, closesAt:T0-5*DAY, awardedTo:'sup2', unsealedAt:T0-5*DAY,
+     type:'open', budget:3000000, target:2700000, opensAt:T0-9*DAY, closesAt:T0-5*DAY, awardedTo:'sup2', unsealedAt:T0-5*DAY,
      buyer:'buy1', invited:['sup1','sup2','sup3'], docs:DOCS,
      desc:'ปิดการประมูลและประกาศผู้ชนะแล้ว',
      items:[{id:'i1', name:'เที่ยววิ่งรถห้องเย็น 6 ล้อ', spec:'0–4°C พร้อมบันทึกอุณหภูมิ', qty:1200, unit:'เที่ยว'}]},
@@ -423,7 +423,9 @@ const bidOf = (tid,sid) => state.bids.find(b=>b.tenderId===tid && b.supplierId==
 const total = (t,lines) => t.items.reduce((s,it)=> s + (Number(lines?.[it.id])||0)*it.qty, 0);
 const bidTotal = b => total(tender(b.tenderId), b.lines);
 const ranked = id => bidsOf(id).slice().sort((a,b)=>bidTotal(a)-bidTotal(b));
-const statusOf = t => t.awardedTo ? 'awarded' : (Date.now() > t.closesAt ? 'closed' : 'live');
+const statusOf = t => t.awardedTo ? 'awarded'
+  : Date.now() > t.closesAt ? 'closed'
+  : Date.now() < (t.opensAt ?? 0) ? 'scheduled' : 'live';
 // ผู้ถือค้อนแบบ "คนเดียว" = ราคาต่ำสุดที่ถึงราคาคาดหวัง (ใช้เมื่อราคาเปิดเผยแล้ว)
 function hammerBid(t){
   if (!t.target) return null;
@@ -472,9 +474,11 @@ function cdText(ms){
 function cdHtml(t){
   const st = statusOf(t);
   if (st==='awarded') return '<span class="cd over">ประกาศผลแล้ว</span>';
-  const ms = t.closesAt-Date.now();
+  const sched = statusOf(t)==='scheduled';
+  const target = sched ? t.opensAt : t.closesAt;
+  const ms = target-Date.now();
   const cls = ms<=0 ? 'over' : (ms<60*MIN ? 'soon' : '');
-  return `<span class="cd ${cls}" data-cd="${t.closesAt}">${cdText(ms)}</span>`;
+  return `<span class="cd ${cls}" data-cd="${target}"${sched?' data-cd-prefix="เปิดรับในอีก "':''}>${sched?'เปิดรับในอีก ':''}${cdText(ms)}</span>`;
 }
 
 /* ---- กฎการมองเห็นราคา (ต้นแบบของ RLS policy บน Supabase) ---- */
@@ -519,6 +523,7 @@ function typeChip(t){
 function statusChip(t){
   const st = statusOf(t);
   if (st==='awarded') return `<span class="chip flat">ประกาศผลแล้ว</span>`;
+  if (st==='scheduled') return `<span class="chip warn">ยังไม่เปิดรับ</span>`;
   if (st==='closed')  return t.type==='sealed' && !t.unsealedAt
       ? `<span class="chip warn">รอเปิดซอง</span>` : `<span class="chip flat">ปิดรับราคา</span>`;
   if (closingSoon(t))  return `<span class="chip warn"><i class="dot pulse"></i>ใกล้หมดเวลา</span>`;
@@ -549,7 +554,7 @@ function tenderRow(t){
       <b>${esc(t.title)}</b>
       <span class="dim num">${t.code}${isBuyer()?' · งบ '+baht(t.budget):''} · ${t.items.length} รายการ · ${n} ใบเสนอราคา</span>
     </span>
-    <span class="r">${cdHtml(t)}<span class="dim">ปิดรับ ${stamp(t.closesAt)}</span></span>
+    <span class="r">${cdHtml(t)}<span class="dim">${statusOf(t)==='scheduled'?'เปิดรับ '+stamp(t.opensAt):'ปิดรับ '+stamp(t.closesAt)}</span></span>
   </button>`;
 }
 
@@ -594,6 +599,14 @@ function bidForm(t){
     docs:  existing ? existing.docs.slice() : [],
     note:  existing ? existing.note : '',
   });
+
+  if (st === 'scheduled'){
+    return `<div class="card"><header><h3>ใบเสนอราคาของคุณ</h3>${statusChip(t)}</header><div class="body stack">
+      <div class="rule"><b>ยังไม่เปิดรับราคา</b> — ระบบจะเปิดให้ยื่นราคาเวลา ${stamp(t.opensAt)} และปิดรับ ${stamp(t.closesAt)}</div>
+      <div class="spread"><span class="muted">เปิดรับในอีก</span><b style="font-size:1.15rem">${cdHtml(t)}</b></div>
+      <p class="dim">ระหว่างนี้ดูรายการที่ต้องเสนอราคาและดาวน์โหลดเอกสารจากผู้ซื้อได้เลย จะได้เตรียมราคาไว้ล่วงหน้า</p>
+    </div></div>`;
+  }
 
   if (st !== 'live'){
     return `<div class="card"><header><h3>ใบเสนอราคาของคุณ</h3>${statusChip(t)}</header><div class="body stack">
@@ -894,7 +907,8 @@ function viewDetail(){
       <div class="stack" style="gap:.25rem;align-items:flex-end;text-align:right">
         <span class="eyebrow">${st==='live'?'เหลือเวลา':'เวลาปิดรับ'}</span>
         <span style="font-size:1.2rem">${cdHtml(t)}</span>
-        <span class="dim">${stamp(t.closesAt)}</span>
+        <span class="dim">เปิดรับ ${stamp(t.opensAt)}</span>
+        <span class="dim">ปิดรับ ${stamp(t.closesAt)}</span>
       </div>
     </div>
 
@@ -1010,9 +1024,10 @@ function viewDash(){
 }
 
 /* ---------------- create tender ---------------- */
-const newT = {title:'', type:'sealed', budget:'', target:'', closes:'', docs:DOCS.join('\n'), files:[],
+const newT = {title:'', type:'sealed', budget:'', target:'', opens:'', closes:'', docs:DOCS.join('\n'), files:[],
   items:[{name:'',spec:'',qty:'',unit:'ชิ้น'}], invited:['sup1','sup2','sup3']};
-function defaultClose(){ const d=new Date(Date.now()+3*DAY); d.setSeconds(0,0); return new Date(d.getTime()-d.getTimezoneOffset()*MIN).toISOString().slice(0,16); }
+function localAt(ms){ const d=new Date(Date.now()+ms); d.setSeconds(0,0); return new Date(d.getTime()-d.getTimezoneOffset()*MIN).toISOString().slice(0,16); }
+function defaultClose(){ return localAt(3*DAY); }
 function readCreate(){
   const q = s => document.querySelector(s);
   if (!q('[data-nt="title"]')) return;
@@ -1020,6 +1035,7 @@ function readCreate(){
   newT.type  = document.querySelector('[name="ntype"]:checked').value;
   newT.budget= q('[data-nt="budget"]').value;
   newT.target= q('[data-nt="target"]').value;
+  newT.opens = q('[data-nt="opens"]').value;
   newT.closes= q('[data-nt="closes"]').value;
   newT.docs  = q('[data-nt="docs"]').value;
   newT.items = [...document.querySelectorAll('[data-item]')].map(row=>({
@@ -1031,6 +1047,7 @@ function readCreate(){
 }
 function sheetCreate(){
   if (!newT.closes) newT.closes = defaultClose();
+  if (!newT.opens)  newT.opens  = localAt(0);
   return `<div class="scrim" data-act="sheet:close"><form class="sheet" data-act="createtender" data-stop>
     <header><h2>สร้างประกาศเชิญประมูล</h2><button type="button" class="btn ghost sm" data-act="sheet:close">ปิด</button></header>
     <div class="body">
@@ -1042,9 +1059,14 @@ function sheetCreate(){
           <label><input type="radio" name="ntype" value="open" ${newT.type==='open'?'checked':''}><b>${ICON.eye} เปิดราคา</b><span class="dim">เห็นราคาเรียลไทม์ ปรับราคาแข่งได้จนหมดเวลา</span></label>
         </div>
       </div>
-      <div class="grid g2" style="gap:.7rem">
-        <label class="f"><span>งบประมาณ (บาท) — เห็นเฉพาะฝ่ายจัดซื้อ</span><input type="number" min="0" data-nt="budget" class="num" value="${esc(newT.budget)}" placeholder="1000000" required></label>
-        <label class="f"><span>ปิดรับราคา</span><input type="datetime-local" data-nt="closes" value="${esc(newT.closes)}" required></label>
+      <label class="f"><span>งบประมาณ (บาท) — เห็นเฉพาะฝ่ายจัดซื้อ</span><input type="number" min="0" data-nt="budget" class="num" value="${esc(newT.budget)}" placeholder="1000000" required></label>
+      <div>
+        <span class="eyebrow" style="display:block;margin-bottom:.4rem">ช่วงเวลาประมูล</span>
+        <div class="grid g2" style="gap:.7rem">
+          <label class="f"><span>เปิดรับราคา</span><input type="datetime-local" data-nt="opens" value="${esc(newT.opens)}" required></label>
+          <label class="f"><span>ปิดรับราคา</span><input type="datetime-local" data-nt="closes" value="${esc(newT.closes)}" required></label>
+        </div>
+        <p class="dim" style="margin-top:.4rem">ตั้งเวลาเปิดล่วงหน้าได้ — ผู้ขายเห็นประกาศและเอกสารก่อน แต่ยื่นราคาไม่ได้จนถึงเวลาเปิด</p>
       </div>
       <label class="f"><span>ราคาคาดหวัง (บาท) — เห็นเฉพาะฝ่ายจัดซื้อ</span>
         <input type="number" min="0" data-nt="target" class="num" value="${esc(newT.target)}" placeholder="เช่น 900000"></label>
@@ -1398,11 +1420,13 @@ document.addEventListener('submit', e=>{
   if (act==='createtender'){
     readCreate();
     const closes = new Date(newT.closes).getTime();
+    const opens  = new Date(newT.opens).getTime() || Date.now();
     if (!newT.invited.length){ toast('ยังไม่ได้เชิญใคร', 'เลือกซัพพลายเออร์อย่างน้อย 1 ราย', 'crit'); return; }
     if (!(closes > Date.now())){ toast('เวลาปิดรับไม่ถูกต้อง', 'ต้องเป็นเวลาในอนาคต', 'crit'); return; }
+    if (!(opens < closes)){ toast('ช่วงเวลาไม่ถูกต้อง', 'เวลาเปิดรับต้องมาก่อนเวลาปิดรับ', 'crit'); return; }
     const t = {
       id: uid('t'), code: nextCode(),
-      title: newT.title.trim(), type: newT.type, budget: Number(newT.budget), closesAt: closes,
+      title: newT.title.trim(), type: newT.type, budget: Number(newT.budget), opensAt: opens, closesAt: closes,
       target: Number(newT.target)||0,
       awardedTo:null, unsealedAt:null, buyer: state.userId, invited: newT.invited.slice(),
       docs: newT.docs.split('\n').map(s=>s.trim()).filter(Boolean), attachments: newT.files.slice(),
@@ -1462,7 +1486,7 @@ let lastStatuses = '';
 function tickCountdowns(){
   document.querySelectorAll('[data-cd]').forEach(el=>{
     const ms = +el.dataset.cd - Date.now();
-    el.textContent = cdText(ms);
+    el.textContent = (el.dataset.cdPrefix || '') + cdText(ms);
     el.classList.toggle('soon', ms>0 && ms<60*MIN);
     el.classList.toggle('over', ms<=0);
   });

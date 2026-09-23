@@ -647,14 +647,20 @@ begin
   if (p->>'closes_at')::timestamptz <= now() then
     raise exception 'เวลาปิดรับต้องเป็นเวลาในอนาคต';
   end if;
+  -- ช่วงเวลาประมูล: เปิดรับ (ไม่ใส่ = เปิดทันที) ต้องมาก่อนปิดรับเสมอ
+  if nullif(p->>'opens_at','') is not null
+     and (p->>'opens_at')::timestamptz >= (p->>'closes_at')::timestamptz then
+    raise exception 'เวลาเปิดรับราคาต้องมาก่อนเวลาปิดรับ';
+  end if;
   if coalesce((p->>'budget')::numeric, 0) <= 0 then
     raise exception 'ต้องระบุงบประมาณ';
   end if;
 
   v_code := public.next_tender_code();
 
-  insert into public.tenders (code, title, description, type, closes_at, created_by)
+  insert into public.tenders (code, title, description, type, opens_at, closes_at, created_by)
   values (v_code, p->>'title', p->>'description', p->>'type',
+          coalesce(nullif(p->>'opens_at','')::timestamptz, now()),
           (p->>'closes_at')::timestamptz, auth.uid())
   returning id into v_id;
 

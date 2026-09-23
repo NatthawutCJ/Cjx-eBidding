@@ -4,15 +4,16 @@ import { ext, kb, SPEC_NOTE } from '../lib/format'
 import { ICON, toast } from './bits'
 
 const DEFAULT_DOCS = ['ใบเสนอราคาลงนาม (PDF)']
-const localDefault = () => {
-  const d = new Date(Date.now() + 3 * 86400000); d.setSeconds(0, 0)
+// ค่าเวลาสำหรับ <input type="datetime-local"> ต้องเป็นเวลาท้องถิ่น ไม่ใช่ UTC
+const localAt = msFromNow => {
+  const d = new Date(Date.now() + msFromNow); d.setSeconds(0, 0)
   return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16)
 }
 
 export default function CreateTender({ suppliers, onClose, onCreated }) {
   const [f, setF] = useState({
     title: '', type: 'sealed', budget: '', target_price: '',
-    closes_at: localDefault(), docs: DEFAULT_DOCS.join('\n'),
+    opens_at: localAt(0), closes_at: localAt(3 * 86400000), docs: DEFAULT_DOCS.join('\n'),
   })
   const [items, setItems] = useState([{ name: '', spec: '', qty: '', unit: 'ชิ้น' }])
   const [invited, setInvited] = useState(suppliers.map(s => s.id))
@@ -22,6 +23,8 @@ export default function CreateTender({ suppliers, onClose, onCreated }) {
 
   async function onSubmit(e) {
     e.preventDefault()
+    if (new Date(f.opens_at) >= new Date(f.closes_at))
+      return toast('ช่วงเวลาไม่ถูกต้อง', 'เวลาเปิดรับราคาต้องมาก่อนเวลาปิดรับ', 'crit')
     setBusy(true)
     try {
       const id = await createTender({
@@ -32,6 +35,7 @@ export default function CreateTender({ suppliers, onClose, onCreated }) {
         type: f.type,
         budget: Number(f.budget),
         target_price: f.target_price === '' ? null : Number(f.target_price),
+        opens_at: new Date(f.opens_at).toISOString(),
         closes_at: new Date(f.closes_at).toISOString(),
         items: items.map(i => ({ name: i.name.trim(), spec: i.spec.trim() || '—', qty: Number(i.qty), unit: i.unit.trim() || 'ชิ้น' })),
         required_docs: f.docs.split('\n').map(s => s.trim()).filter(Boolean),
@@ -66,13 +70,24 @@ export default function CreateTender({ suppliers, onClose, onCreated }) {
             </div>
           </div>
 
-          <div className="grid g2" style={{ gap: '.7rem' }}>
-            <label className="f"><span>งบประมาณ (บาท) — เห็นเฉพาะฝ่ายจัดซื้อ</span>
-              <input type="number" min="0" className="num" required value={f.budget}
-                     onChange={e => set('budget', e.target.value)} placeholder="1000000" /></label>
-            <label className="f"><span>ปิดรับราคา</span>
-              <input type="datetime-local" required value={f.closes_at}
-                     onChange={e => set('closes_at', e.target.value)} /></label>
+          <label className="f"><span>งบประมาณ (บาท) — เห็นเฉพาะฝ่ายจัดซื้อ</span>
+            <input type="number" min="0" className="num" required value={f.budget}
+                   onChange={e => set('budget', e.target.value)} placeholder="1000000" /></label>
+
+          <div>
+            <span className="eyebrow" style={{ display: 'block', marginBottom: '.4rem' }}>ช่วงเวลาประมูล</span>
+            <div className="grid g2" style={{ gap: '.7rem' }}>
+              <label className="f"><span>เปิดรับราคา</span>
+                <input type="datetime-local" required value={f.opens_at}
+                       onChange={e => set('opens_at', e.target.value)} /></label>
+              <label className="f"><span>ปิดรับราคา</span>
+                <input type="datetime-local" required value={f.closes_at}
+                       onChange={e => set('closes_at', e.target.value)} /></label>
+            </div>
+            <p className="dim" style={{ marginTop: '.4rem' }}>
+              ตั้งเวลาเปิดล่วงหน้าได้ — ผู้ขายจะเห็นประกาศและเอกสารก่อน แต่ยื่นราคาไม่ได้จนถึงเวลาเปิด
+              (ระบบขึ้นสถานะ “ยังไม่เปิดรับ” และนับถอยหลังให้)
+            </p>
           </div>
 
           <label className="f"><span>ราคาคาดหวัง (บาท) — เห็นเฉพาะฝ่ายจัดซื้อ</span>
