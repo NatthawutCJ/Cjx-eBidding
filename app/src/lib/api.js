@@ -71,16 +71,34 @@ export async function getProfile(passedUser) {
 
 // ============================ tenders ============================
 // ไม่มี budget ในนี้ — งบประมาณอยู่ตาราง tender_internal ที่ผู้ขายอ่านไม่ได้
-const TENDER_COLS = `
-  id, code, title, description, type, remark, currency,
+//
+// remark เป็นคอลัมน์ที่เพิ่มทีหลัง (16_remark.sql) ถ้าฐานข้อมูลยังไม่ได้รันไฟล์นั้น
+// PostgREST จะตอบ "column tenders.remark does not exist" แล้วรายการประมูลหายทั้งหน้า
+// จึงต้องถอยไปขอแบบไม่มีคอลัมน์นี้แทนการพังทั้งหน้า (เว็บกับฐานข้อมูลอัปเดตคนละจังหวะเสมอ)
+let hasRemark = true
+const tenderCols = () => `
+  id, code, title, description, type,${hasRemark ? ' remark,' : ''} currency,
   opens_at, closes_at, unsealed_at, awarded_bid_id, awarded_at, created_at,
   tender_items(id, name, spec, qty, unit, sort),
   tender_invites(supplier_id, declined_at)`
 
+const missingCol = e => e && /column .* does not exist/i.test(e.message || '')
+
+// ยิง query แล้วถ้าเจอคอลัมน์ที่ยังไม่มีในฐานข้อมูล ให้ลองใหม่โดยตัดคอลัมน์นั้นออก
+async function selectTender(build) {
+  let res = await build(tenderCols())
+  if (res.error && hasRemark && missingCol(res.error) && /remark/.test(res.error.message)) {
+    console.warn('[ประกาศ] ฐานข้อมูลยังไม่มีคอลัมน์ remark — ข้ามไปก่อน (ให้ผู้ดูแลรัน 16_remark.sql)')
+    hasRemark = false
+    res = await build(tenderCols())
+  }
+  return res
+}
+
 export async function listTenders(supplierId) {
-  const { data, error } = await supabase.from('tenders')
-    .select(`${TENDER_COLS}, tender_events(id, kind, message, created_at)`)
-    .order('closes_at', { ascending: false })
+  const { data, error } = await selectTender(cols => supabase.from('tenders')
+    .select(`${cols}, tender_events(id, kind, message, created_at)`)
+    .order('closes_at', { ascending: false }))
   if (error) throw error
   const rows = data || []
 
@@ -116,9 +134,9 @@ export async function listSuppliers() {
 
 export async function getTender(id) {
   const [t, bids, events, count, hammer, myTarget, myHammer, internal] = await Promise.all([
-    supabase.from('tenders').select(`${TENDER_COLS},
+    selectTender(cols => supabase.from('tenders').select(`${cols},
         tender_required_docs(id, label, sort),
-        tender_files(id, file_name, file_path, size_bytes)`).eq('id', id).single(),
+        tender_files(id, file_name, file_path, size_bytes)`).eq('id', id).single()),
     supabase.from('bids').select(`id, supplier_id, total, note, version, submitted_at,
         bid_lines(item_id, unit_price),
         bid_files(id, file_name, file_path, size_bytes),
