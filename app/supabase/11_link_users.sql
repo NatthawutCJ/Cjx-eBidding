@@ -52,6 +52,16 @@ begin
     raise exception 'ไม่พบอีเมล % ใน Authentication > Users — สร้างบัญชีก่อน (ติ๊ก Auto Confirm) แล้วกดผูกอีกครั้ง', p_email;
   end if;
 
+  -- กันบัญชีฝ่ายจัดซื้อถูกลดชั้นเป็นผู้ขายโดยไม่ตั้งใจ (เคยเกิดจริง: จัดซื้อหลุดสิทธิ์ทั้งใบ)
+  -- ถ้าตั้งใจเปลี่ยนจริง ให้ถอนการผูกก่อนแล้วค่อยผูกใหม่ จะได้มีร่องรอยสองบรรทัดใน admin_actions
+  if p_role <> 'buyer'
+     and exists (select 1 from public.profiles where id = v_id and role = 'buyer') then
+    raise exception 'บัญชี % เป็นฝ่ายจัดซื้ออยู่ เปลี่ยนเป็นผู้ขายตรง ๆ ไม่ได้ — ถอนการผูกก่อนถ้าตั้งใจเปลี่ยนจริง', p_email;
+  end if;
+  if v_id = auth.uid() and p_role <> 'buyer' then
+    raise exception 'เปลี่ยนบทบาทของบัญชีตัวเองไม่ได้';
+  end if;
+
   insert into public.profiles (id, role, full_name, position, supplier_id, must_change_password)
   values (v_id, p_role, coalesce(nullif(trim(p_full_name),''), split_part(p_email,'@',1)),
           p_position, p_supplier_id, true)
