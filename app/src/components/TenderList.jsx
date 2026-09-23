@@ -36,7 +36,9 @@ export function TenderRow({ t, profile, onOpen }) {
 
 export default function TenderList({ tenders, profile, onOpen, onCreate }) {
   const live = tenders.filter(t => statusOf(t) === 'live')
-  const past = tenders.filter(t => statusOf(t) !== 'live')
+  // งานที่ตั้งเวลาเปิดไว้ล่วงหน้า ต้องแยกออกมา ไม่ใช่ไปกองรวมกับงานที่ปิดไปแล้ว
+  const soon = tenders.filter(t => statusOf(t) === 'scheduled')
+  const past = tenders.filter(t => !['live', 'scheduled'].includes(statusOf(t)))
   const isBuyer = profile.role === 'buyer'
   return (
     <div className="page">
@@ -46,6 +48,7 @@ export default function TenderList({ tenders, profile, onOpen, onCreate }) {
           <h1>{isBuyer ? 'ประกาศทั้งหมด' : 'งานที่คุณถูกเชิญ'}</h1>
           <p className="muted">
             {live.length} รายการกำลังเปิดรับราคา
+            {soon.length > 0 && ` · อีก ${soon.length} รายการรอถึงเวลาเปิด`}
             {!isBuyer && ' — ยื่นราคาก่อนหมดเวลาเพื่อเข้าร่วมพิจารณา'}
           </p>
         </div>
@@ -67,6 +70,21 @@ export default function TenderList({ tenders, profile, onOpen, onCreate }) {
             : <div style={{ padding: '1rem' }} className="dim">ยังไม่มีงานที่เปิดรับราคา</div>}
         </div>
       </div>
+
+      {soon.length > 0 && (
+        <div className="card">
+          <header><h3>ยังไม่เปิดรับราคา</h3><span className="chip warn">{soon.length}</span></header>
+          <div className="tlist">
+            {soon.map(t => <TenderRow key={t.id} t={t} profile={profile} onOpen={onOpen} />)}
+          </div>
+          <footer style={{ padding: '.7rem 1rem', borderTop: '1px solid var(--line)' }}>
+            <span className="dim">
+              {isBuyer ? 'ผู้ขายที่ถูกเชิญเห็นประกาศและดาวน์โหลดเอกสารได้แล้ว แต่ยื่นราคาไม่ได้จนถึงเวลาเปิด'
+                       : 'ดูรายละเอียดและดาวน์โหลดเอกสารได้เลย ระบบจะเปิดให้ยื่นราคาเมื่อถึงเวลา'}
+            </span>
+          </footer>
+        </div>
+      )}
 
       <div className="card">
         <header><h3>ปิดรับ / ประกาศผล</h3><span className="chip flat">{past.length}</span></header>

@@ -80,9 +80,11 @@
      ที่สคริปต์สร้าง (`send-test-email.mjs ... --eml`) — ได้อีเมลจริงในนามบริษัทที่ผ่าน DMARC เพราะออกจาก M365 เอง
      ต้องให้ผู้มีสิทธิ์ Exchange admin ทำ (`Add-RecipientPermission` หรือ Exchange admin center → Groups → Delegation)
    - เสร็จแล้วตั้ง Supabase → Authentication → SMTP: `smtp.resend.com:587`, user `resend`, pass = API key, sender = `noreply.snp@cjmart.co.th` → ปุ่ม "ลืมรหัสผ่าน" จะใช้งานได้
-3. รัน `14_open_period.sql` ใน Supabase — ทำให้ `create_tender()` รับเวลา "เปิดรับราคา" จากหน้าเว็บ
+3. รัน `14_open_period.sql` + `15_open_visibility.sql` ใน Supabase — ทำให้ `create_tender()` รับเวลา "เปิดรับราคา" จากหน้าเว็บ
    (คอลัมน์ `tenders.opens_at` มีอยู่แล้ว ก่อนหน้านี้ทุกงานจึงเปิดทันทีเสมอ) **หน้าเว็บใหม่ส่งค่านี้มาแล้ว
    ถ้ายังไม่รัน SQL งานที่สร้างจะเปิดรับทันทีโดยไม่สนเวลาที่กรอก — ไม่ error แต่ผิดจากที่ตั้งใจ**
+   ส่วน `15` ตัดเงื่อนไข `opens_at <= now()` ออกจาก `can_see_tender()` ไม่งั้น**ผู้ขายจะมองไม่เห็น
+   ประกาศเลยจนกว่าจะถึงเวลาเปิด** ซึ่งทำให้การตั้งเวลาล่วงหน้าไร้ประโยชน์
 4. ตั้ง **custom domain** (แผนเดิมคือ `bidding.cjmart.co.th`) ที่ Cloudflare Pages ก่อนเชิญผู้ขายจริง
 5. ตรวจว่า**งานตัวอย่างจาก `05_seed.sql` ถูกลบออกจาก production แล้ว** ก่อนเปิดใช้จริง (ใช้ปุ่มลบในหน้ารายละเอียดประกาศ — ลบได้เพราะยังไม่มีใครยื่นราคา)
 6. ทดสอบ RLS ก่อนเปิดใช้จริง: ล็อกอินเป็นผู้ขาย A แล้วยิง REST ตรง ๆ ต้องไม่เห็นราคาของผู้ขาย B ในงานแบบปิด และต้องไม่เห็น `tender_internal` เลย (เช็กลิสต์อยู่ใน `deploy-guide.html`)

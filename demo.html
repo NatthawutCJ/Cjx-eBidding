@@ -946,15 +946,22 @@ function viewDetail(){
 /* ---------------- lists ---------------- */
 function viewList(){
   const mine = state.tenders.filter(t=> isBuyer() ? true : t.invited.includes(state.userId));
-  const live = mine.filter(t=>statusOf(t)==='live'), past = mine.filter(t=>statusOf(t)!=='live');
+  const live = mine.filter(t=>statusOf(t)==='live');
+  const soon = mine.filter(t=>statusOf(t)==='scheduled');   // ตั้งเวลาเปิดไว้ล่วงหน้า
+  const past = mine.filter(t=>!['live','scheduled'].includes(statusOf(t)));
   return `<div class="page">
     <div class="pagehead"><div class="grow stack" style="gap:.2rem">
       <span class="eyebrow">ประกาศเชิญประมูล</span>
       <h1>${isBuyer()?'ประกาศทั้งหมด':'งานที่คุณถูกเชิญ'}</h1>
-      <p class="muted">${live.length} รายการกำลังเปิดรับราคา${isBuyer()?'':' — ยื่นราคาก่อนหมดเวลาเพื่อเข้าร่วมพิจารณา'}</p>
+      <p class="muted">${live.length} รายการกำลังเปิดรับราคา${soon.length?` · อีก ${soon.length} รายการรอถึงเวลาเปิด`:''}${isBuyer()?'':' — ยื่นราคาก่อนหมดเวลาเพื่อเข้าร่วมพิจารณา'}</p>
     </div>${isBuyer()?`<button class="btn primary" data-act="sheet:create">${ICON.plus} สร้างประกาศ</button>`:''}</div>
     <div class="card"><header><h3>กำลังเปิดรับราคา</h3><span class="chip live"><i class="dot pulse"></i>${live.length}</span></header>
       <div class="tlist">${live.map(tenderRow).join('') || `<div style="padding:1rem" class="dim">ยังไม่มีงานที่เปิดรับราคา</div>`}</div></div>
+    ${soon.length?`<div class="card"><header><h3>ยังไม่เปิดรับราคา</h3><span class="chip warn">${soon.length}</span></header>
+      <div class="tlist">${soon.map(tenderRow).join('')}</div>
+      <footer style="padding:.7rem 1rem;border-top:1px solid var(--line)"><span class="dim">${isBuyer()
+        ? 'ผู้ขายที่ถูกเชิญเห็นประกาศและดาวน์โหลดเอกสารได้แล้ว แต่ยื่นราคาไม่ได้จนถึงเวลาเปิด'
+        : 'ดูรายละเอียดและดาวน์โหลดเอกสารได้เลย ระบบจะเปิดให้ยื่นราคาเมื่อถึงเวลา'}</span></footer></div>`:''}
     <div class="card"><header><h3>ปิดรับ / ประกาศผล</h3><span class="chip flat">${past.length}</span></header>
       <div class="tlist">${past.map(tenderRow).join('') || `<div style="padding:1rem" class="dim">—</div>`}</div></div>
   </div>`;

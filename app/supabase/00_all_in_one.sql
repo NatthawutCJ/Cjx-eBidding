@@ -269,12 +269,13 @@ language sql stable security definer set search_path = public as $$
 $$;
 
 -- มองเห็นตัวประกาศได้ไหม (ใช้ซ้ำหลายตาราง)
+-- ผู้ขายที่ถูกเชิญเห็นประกาศได้ตั้งแต่ถูกเชิญ แม้ยังไม่ถึงเวลาเปิดรับราคา
+-- เพราะช่วงก่อนเปิดมีไว้ให้เตรียมตัว (อ่านสเปก โหลด TOR คิดราคา)
+-- การ "ยื่นราคา" ยังถูกกันด้วย submit_bid() ที่เช็ก now() < opens_at อยู่แล้ว
+-- และราคาของคู่แข่งยังกันด้วย can_see_prices() แยกต่างหาก
 create or replace function public.can_see_tender(p_tender uuid) returns boolean
 language sql stable security definer set search_path = public as $$
-  select public.is_buyer() or (
-    public.is_invited(p_tender)
-    and exists (select 1 from public.tenders t where t.id = p_tender and t.opens_at <= now())
-  )
+  select public.is_buyer() or public.is_invited(p_tender)
 $$;
 
 -- ---------- เปิด RLS ทุกตาราง ----------
