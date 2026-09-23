@@ -309,6 +309,8 @@ function LaterDocs({ t, profile, onDone }) {
   const have = (myBid.bid_files || []).length
   const need = t.required_docs.length
   const ok = have >= need
+  // ประกาศผลแล้ว ผู้ชนะยังต้องส่งเอกสารต่อ ส่วนรายที่ไม่ได้รับเลือกจบแล้ว
+  const iWon = !!t.awarded_bid_id && t.awarded_bid_id === myBid.id
   const st = statusOf(t)
   const dueAt = docsDueAt(t)
   const late = Date.now() > dueAt
@@ -352,21 +354,27 @@ function LaterDocs({ t, profile, onDone }) {
   return (
     <div className="card">
       <header><h3>ส่งเอกสารประกอบ</h3>
-        {ok ? <span className="chip live">{ICON.check}ครบ {have}/{need}</span>
-            : <span className={'chip ' + (late ? 'crit' : 'warn')}>{have}/{need} ไฟล์</span>}
+        <span className="row" style={{ gap: '.35rem' }}>
+          {iWon && <span className="chip live">{ICON.gavel}ผู้ชนะ</span>}
+          {ok ? <span className="chip live">{ICON.check}ครบ {have}/{need}</span>
+              : <span className={'chip ' + (late ? 'crit' : 'warn')}>{have}/{need} ไฟล์</span>}
+        </span>
       </header>
       <div className="body stack">
         <div className="rule" style={ok ? undefined
           : { borderLeftColor: `var(--${late ? 'crit' : 'warn'})`, background: `var(--${late ? 'crit' : 'warn'}-wash)` }}>
-          {ok ? <><b>เอกสารครบแล้ว</b> — รอฝ่ายจัดซื้อพิจารณาผล</>
+          {iWon ? <><b>บริษัทของท่านได้รับเลือกเป็นผู้ชนะ</b> — {ok
+              ? 'เอกสารครบแล้ว ฝ่ายจัดซื้อจะติดต่อกลับเรื่องการส่งมอบ'
+              : `กรุณาส่งเอกสารให้ครบ (${have}/${need}) เพื่อออกใบสั่งซื้อ`}</>
+            : ok ? <><b>เอกสารครบแล้ว</b> — รอฝ่ายจัดซื้อพิจารณาผล</>
             : late ? <><b>เกินกำหนดส่งเอกสารแล้ว</b> — ครบกำหนด {stamp(dueAt)} ยังส่งได้ แต่ฝ่ายจัดซื้อมีสิทธิ์ตัดสิทธิ์ใบเสนอราคาของท่าน</>
             : <><b>ปิดรับราคาแล้ว กรุณาส่งเอกสารภายใน {cdText(dueAt - Date.now())}</b> — ครบกำหนด {stamp(dueAt)} ไม่ส่งตามกำหนดถือว่าสละสิทธิ์</>}
         </div>
         {checklist}
         <p className="dim">{SPEC_NOTE}</p>
         {have > 0 && <DocList files={myBid.bid_files} bucket="bid-files" />}
-        {st === 'awarded'
-          ? <p className="dim">ประกาศผลแล้ว ปิดรับเอกสารเพิ่ม</p>
+        {st === 'awarded' && !iWon
+          ? <p className="dim">ประกาศผลแล้ว — งานนี้ไม่ได้เลือกบริษัทของท่าน ไม่ต้องส่งเอกสารเพิ่ม</p>
           : <label className="drop">
               <input type="file" multiple disabled={busy} onChange={onPick}
                      style={{ position: 'absolute', opacity: 0, width: 1, height: 1 }} />
