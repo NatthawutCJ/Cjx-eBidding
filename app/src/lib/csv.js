@@ -35,6 +35,7 @@ export function tenderComparisonRows(t) {
   rows.push(['ประเภท', t.type === 'sealed' ? 'ปิดราคา' : 'เปิดราคา'])
   if (t.budget != null) rows.push(['งบประมาณ', t.budget])
   if (t.target_price != null) rows.push(['ราคาคาดหวัง (ภายใน)', t.target_price])
+  if (t.remark) rows.push(['หมายเหตุถึงผู้ขาย', t.remark])
   rows.push(['เปิดรับราคา', d(t.opens_at)])
   rows.push(['ปิดรับราคา', d(t.closes_at)])
   if (t.unsealed_at) rows.push(['เปิดซอง', d(t.unsealed_at)])

@@ -45,6 +45,12 @@ export default function TenderDetail({ id, profile, onBack }) {
           </div>
           <h1>{t.title}</h1>
           <p className="muted">{t.description}</p>
+          {t.remark && (
+            <div className="rule" style={{ borderLeftColor: 'var(--warn)', background: 'var(--warn-wash)',
+                                           whiteSpace: 'pre-wrap' }}>
+              <b>หมายเหตุจากฝ่ายจัดซื้อ</b><br />{t.remark}
+            </div>
+          )}
           {t.cancelled_at && (
             <div className="rule" style={{ borderLeftColor: 'var(--crit)', background: 'var(--crit-wash)' }}>
               <b>ประกาศนี้ถูกยกเลิกเมื่อ {stamp(t.cancelled_at)}</b><br />

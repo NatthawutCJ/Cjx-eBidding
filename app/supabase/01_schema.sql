@@ -51,6 +51,7 @@ create table public.tenders (
   awarded_bid_id uuid,                                    -- FK เพิ่มท้ายไฟล์ (วนกับ bids)
   awarded_at     timestamptz,
   awarded_by     uuid references public.profiles(id),
+  remark         text,                                    -- หมายเหตุถึงผู้ขาย (ผู้ถูกเชิญทุกรายเห็น)
   cancelled_at   timestamptz,                             -- ยกเลิกประกาศ (เก็บประวัติไว้ ไม่ลบ)
   cancelled_by   uuid references public.profiles(id),
   cancel_reason  text,

@@ -72,7 +72,7 @@ export async function getProfile(passedUser) {
 // ============================ tenders ============================
 // ไม่มี budget ในนี้ — งบประมาณอยู่ตาราง tender_internal ที่ผู้ขายอ่านไม่ได้
 const TENDER_COLS = `
-  id, code, title, description, type, currency,
+  id, code, title, description, type, remark, currency,
   opens_at, closes_at, unsealed_at, awarded_bid_id, awarded_at, created_at,
   tender_items(id, name, spec, qty, unit, sort),
   tender_invites(supplier_id, declined_at)`

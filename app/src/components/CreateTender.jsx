@@ -14,6 +14,7 @@ export default function CreateTender({ suppliers, onClose, onCreated }) {
   const [f, setF] = useState({
     title: '', type: 'sealed', budget: '', target_price: '',
     opens_at: localAt(0), closes_at: localAt(3 * 86400000), docs: DEFAULT_DOCS.join('\n'),
+    remark: '',
   })
   const [items, setItems] = useState([{ name: '', spec: '', qty: '', unit: 'ชิ้น' }])
   const [invited, setInvited] = useState(suppliers.map(s => s.id))
@@ -35,6 +36,7 @@ export default function CreateTender({ suppliers, onClose, onCreated }) {
         type: f.type,
         budget: Number(f.budget),
         target_price: f.target_price === '' ? null : Number(f.target_price),
+        remark: f.remark.trim(),
         opens_at: new Date(f.opens_at).toISOString(),
         closes_at: new Date(f.closes_at).toISOString(),
         items: items.map(i => ({ name: i.name.trim(), spec: i.spec.trim() || '—', qty: Number(i.qty), unit: i.unit.trim() || 'ชิ้น' })),
@@ -164,6 +166,17 @@ export default function CreateTender({ suppliers, onClose, onCreated }) {
               <span className="dim" style={{ display: 'block' }}>ผู้ถูกเชิญทุกรายเห็นและดาวน์โหลดได้ทันทีที่ประกาศ</span>
             </label>
           </div>
+
+          <label className="f"><span>หมายเหตุถึงผู้ขาย (ไม่บังคับ)</span>
+            <textarea value={f.remark} maxLength={2000} rows={3}
+                      onChange={e => set('remark', e.target.value)}
+                      placeholder={'เช่น เงื่อนไขการชำระเงิน 30 วันหลังรับของ\n' +
+                                   'ส่งมอบที่ DC บางบัวทอง จ–ศ 08:00–16:00\n' +
+                                   'ราคารวมค่าขนส่งและภาษีแล้ว'} /></label>
+          <p className="dim" style={{ marginTop: '-.4rem' }}>
+            {ICON.eye} ผู้ขายที่ถูกเชิญทุกรายอ่านข้อความนี้ได้ —
+            <b> ห้ามใส่งบประมาณหรือราคาคาดหวัง</b> ({f.remark.length}/2000)
+          </p>
 
           <label className="f"><span>เอกสารที่ซัพพลายเออร์ต้องแนบกลับ (บรรทัดละ 1 รายการ)</span>
             <textarea value={f.docs} onChange={e => set('docs', e.target.value)} /></label>

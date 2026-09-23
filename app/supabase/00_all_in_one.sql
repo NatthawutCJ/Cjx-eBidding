@@ -94,6 +94,7 @@ create table public.tenders (
   awarded_bid_id uuid,                                    -- FK เพิ่มท้ายไฟล์ (วนกับ bids)
   awarded_at     timestamptz,
   awarded_by     uuid references public.profiles(id),
+  remark         text,                                    -- หมายเหตุถึงผู้ขาย (ผู้ถูกเชิญทุกรายเห็น)
   cancelled_at   timestamptz,                             -- ยกเลิกประกาศ (เก็บประวัติไว้ ไม่ลบ)
   cancelled_by   uuid references public.profiles(id),
   cancel_reason  text,
@@ -659,8 +660,9 @@ begin
 
   v_code := public.next_tender_code();
 
-  insert into public.tenders (code, title, description, type, opens_at, closes_at, created_by)
+  insert into public.tenders (code, title, description, type, remark, opens_at, closes_at, created_by)
   values (v_code, p->>'title', p->>'description', p->>'type',
+          left(nullif(btrim(p->>'remark'), ''), 2000),
           coalesce(nullif(p->>'opens_at','')::timestamptz, now()),
           (p->>'closes_at')::timestamptz, auth.uid())
   returning id into v_id;

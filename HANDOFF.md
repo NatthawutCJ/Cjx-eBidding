@@ -80,7 +80,7 @@
      ที่สคริปต์สร้าง (`send-test-email.mjs ... --eml`) — ได้อีเมลจริงในนามบริษัทที่ผ่าน DMARC เพราะออกจาก M365 เอง
      ต้องให้ผู้มีสิทธิ์ Exchange admin ทำ (`Add-RecipientPermission` หรือ Exchange admin center → Groups → Delegation)
    - เสร็จแล้วตั้ง Supabase → Authentication → SMTP: `smtp.resend.com:587`, user `resend`, pass = API key, sender = `noreply.snp@cjmart.co.th` → ปุ่ม "ลืมรหัสผ่าน" จะใช้งานได้
-3. รัน `14_open_period.sql` + `15_open_visibility.sql` ใน Supabase — ทำให้ `create_tender()` รับเวลา "เปิดรับราคา" จากหน้าเว็บ
+3. รัน `14_open_period.sql` + `15_open_visibility.sql` + `16_remark.sql` ใน Supabase — ทำให้ `create_tender()` รับเวลา "เปิดรับราคา" จากหน้าเว็บ
    (คอลัมน์ `tenders.opens_at` มีอยู่แล้ว ก่อนหน้านี้ทุกงานจึงเปิดทันทีเสมอ) **หน้าเว็บใหม่ส่งค่านี้มาแล้ว
    ถ้ายังไม่รัน SQL งานที่สร้างจะเปิดรับทันทีโดยไม่สนเวลาที่กรอก — ไม่ error แต่ผิดจากที่ตั้งใจ**
    ส่วน `15` ตัดเงื่อนไข `opens_at <= now()` ออกจาก `can_see_tender()` ไม่งั้น**ผู้ขายจะมองไม่เห็น

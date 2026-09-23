@@ -363,6 +363,7 @@ const state = {
   events: [],
   tenders: [
     {id:'t1', code:'RFQ_2026_08_014', title:'ถุงหูหิ้วพลาสติก HDPE 6 ขนาด (ล็อต ก.ย.)',
+     remark:'ราคาที่เสนอต้องรวมค่าขนส่งถึง DC บางบัวทอง และภาษีมูลค่าเพิ่มแล้ว\nชำระเงิน 30 วันหลังรับของครบ',
      type:'open', budget:1850000, target:1100000, opensAt:T0-2*DAY, closesAt:T0+41*MIN+18000, awardedTo:null, unsealedAt:null,
      buyer:'buy1', invited:['sup1','sup2','sup3'], docs:DOCS,
      desc:'ประมูลแบบเปิด — เห็นราคาคู่แข่งแบบเรียลไทม์ ปรับราคาได้ไม่จำกัดจนหมดเวลา',
@@ -903,6 +904,7 @@ function viewDetail(){
         <div class="row" style="gap:.4rem">${typeChip(t)}${statusChip(t)}<span class="dim num">${t.code}</span></div>
         <h1>${esc(t.title)}</h1>
         <p class="muted">${esc(t.desc)}</p>
+        ${t.remark?`<div class="rule" style="border-left-color:var(--warn);background:var(--warn-wash);white-space:pre-wrap"><b>หมายเหตุจากฝ่ายจัดซื้อ</b><br>${esc(t.remark)}</div>`:''}
       </div>
       <div class="stack" style="gap:.25rem;align-items:flex-end;text-align:right">
         <span class="eyebrow">${st==='live'?'เหลือเวลา':'เวลาปิดรับ'}</span>
@@ -1031,7 +1033,7 @@ function viewDash(){
 }
 
 /* ---------------- create tender ---------------- */
-const newT = {title:'', type:'sealed', budget:'', target:'', opens:'', closes:'', docs:DOCS.join('\n'), files:[],
+const newT = {title:'', type:'sealed', budget:'', target:'', opens:'', closes:'', remark:'', docs:DOCS.join('\n'), files:[],
   items:[{name:'',spec:'',qty:'',unit:'ชิ้น'}], invited:['sup1','sup2','sup3']};
 function localAt(ms){ const d=new Date(Date.now()+ms); d.setSeconds(0,0); return new Date(d.getTime()-d.getTimezoneOffset()*MIN).toISOString().slice(0,16); }
 function defaultClose(){ return localAt(3*DAY); }
@@ -1044,6 +1046,7 @@ function readCreate(){
   newT.target= q('[data-nt="target"]').value;
   newT.opens = q('[data-nt="opens"]').value;
   newT.closes= q('[data-nt="closes"]').value;
+  newT.remark= q('[data-nt="remark"]').value;
   newT.docs  = q('[data-nt="docs"]').value;
   newT.items = [...document.querySelectorAll('[data-item]')].map(row=>({
     name: row.querySelector('[data-i="name"]').value,
@@ -1103,6 +1106,8 @@ function sheetCreate(){
           <span class="dim" style="display:block">ผู้ถูกเชิญทุกรายเห็นและดาวน์โหลดได้ทันทีที่ประกาศ</span>
         </label>
       </div>
+      <label class="f"><span>หมายเหตุถึงผู้ขาย (ไม่บังคับ)</span><textarea data-nt="remark" rows="3" maxlength="2000" placeholder="เช่น เงื่อนไขการชำระเงิน 30 วันหลังรับของ&#10;ส่งมอบที่ DC บางบัวทอง จ–ศ 08:00–16:00&#10;ราคารวมค่าขนส่งและภาษีแล้ว">${esc(newT.remark)}</textarea></label>
+      <p class="dim" style="margin-top:-.4rem">${ICON.eye} ผู้ขายที่ถูกเชิญทุกรายอ่านข้อความนี้ได้ — <b>ห้ามใส่งบประมาณหรือราคาคาดหวัง</b></p>
       <label class="f"><span>เอกสารที่ซัพพลายเออร์ต้องแนบกลับ (บรรทัดละ 1 รายการ)</span><textarea data-nt="docs">${esc(newT.docs)}</textarea></label>
       <div>
         <span class="eyebrow" style="display:block;margin-bottom:.4rem">เชิญซัพพลายเออร์</span>
@@ -1434,6 +1439,7 @@ document.addEventListener('submit', e=>{
     const t = {
       id: uid('t'), code: nextCode(),
       title: newT.title.trim(), type: newT.type, budget: Number(newT.budget), opensAt: opens, closesAt: closes,
+      remark: newT.remark.trim(),
       target: Number(newT.target)||0,
       awardedTo:null, unsealedAt:null, buyer: state.userId, invited: newT.invited.slice(),
       docs: newT.docs.split('\n').map(s=>s.trim()).filter(Boolean), attachments: newT.files.slice(),

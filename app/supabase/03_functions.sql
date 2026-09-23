@@ -280,8 +280,9 @@ begin
 
   v_code := public.next_tender_code();
 
-  insert into public.tenders (code, title, description, type, opens_at, closes_at, created_by)
+  insert into public.tenders (code, title, description, type, remark, opens_at, closes_at, created_by)
   values (v_code, p->>'title', p->>'description', p->>'type',
+          left(nullif(btrim(p->>'remark'), ''), 2000),
           coalesce(nullif(p->>'opens_at','')::timestamptz, now()),
           (p->>'closes_at')::timestamptz, auth.uid())
   returning id into v_id;
