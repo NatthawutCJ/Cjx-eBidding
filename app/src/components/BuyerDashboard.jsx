@@ -4,6 +4,8 @@ import { TenderRow } from './TenderList.jsx'
 
 export default function BuyerDashboard({ tenders, events, profile, onOpen, onCreate }) {
   const live = tenders.filter(t => statusOf(t) === 'live')
+  // งานที่ตั้งเวลาเปิดไว้ล่วงหน้า ต้องโผล่ที่ไหนสักแห่ง ไม่งั้นสร้างเสร็จแล้วเหมือนหายไป
+  const soon = tenders.filter(t => statusOf(t) === 'scheduled')
   const toUnseal = tenders.filter(t => t.type === 'sealed' && !t.unsealed_at && statusOf(t) === 'closed')
   const awarded = tenders.filter(t => t.awarded_bid_id)
   const bidsTotal = tenders.reduce((s, t) => s + (t.bid_count || 0), 0)
@@ -14,7 +16,11 @@ export default function BuyerDashboard({ tenders, events, profile, onOpen, onCre
         <div className="grow stack" style={{ gap: '.2rem' }}>
           <span className="eyebrow">ภาพรวมฝ่ายจัดซื้อ</span>
           <h1>สวัสดี {profile.full_name.split(' ')[0]}</h1>
-          <p className="muted">{live.length} งานกำลังเปิดรับราคา · {toUnseal.length} งานรอเปิดซอง</p>
+          <p className="muted">
+            {live.length} งานกำลังเปิดรับราคา
+            {soon.length > 0 && ` · ${soon.length} งานรอถึงเวลาเปิด`}
+            {' · '}{toUnseal.length} งานรอเปิดซอง
+          </p>
         </div>
         <button className="btn primary" onClick={onCreate}>{ICON.plus} สร้างประกาศ</button>
       </div>
@@ -22,6 +28,9 @@ export default function BuyerDashboard({ tenders, events, profile, onOpen, onCre
       <div className="grid g4">
         <div className="stat"><span className="eyebrow">เปิดรับราคา</span><span className="v">{live.length}</span>
           <span className="dim">จากทั้งหมด {tenders.length} ประกาศ</span></div>
+        <div className="stat"><span className="eyebrow">รอถึงเวลาเปิด</span>
+          <span className="v" style={{ color: soon.length ? 'var(--warn)' : 'inherit' }}>{soon.length}</span>
+          <span className="dim">ตั้งเวลาไว้ล่วงหน้า</span></div>
         <div className="stat"><span className="eyebrow">ใบเสนอราคาทั้งหมด</span><span className="v">{bidsTotal}</span>
           <span className="dim">รวมทุกงาน</span></div>
         <div className="stat"><span className="eyebrow">รอเปิดซอง</span>
@@ -36,6 +45,16 @@ export default function BuyerDashboard({ tenders, events, profile, onOpen, onCre
         <div className="card">
           <header><h3>รอเปิดซอง</h3><span className="chip warn">{toUnseal.length}</span></header>
           <div className="tlist">{toUnseal.map(t => <TenderRow key={t.id} t={t} profile={profile} onOpen={onOpen} />)}</div>
+        </div>
+      )}
+
+      {soon.length > 0 && (
+        <div className="card">
+          <header><h3>ยังไม่เปิดรับราคา</h3><span className="chip warn">{soon.length}</span></header>
+          <div className="tlist">{soon.map(t => <TenderRow key={t.id} t={t} profile={profile} onOpen={onOpen} />)}</div>
+          <footer style={{ padding: '.7rem 1rem', borderTop: '1px solid var(--line)' }}>
+            <span className="dim">ผู้ขายที่ถูกเชิญเห็นประกาศและดาวน์โหลดเอกสารได้แล้ว แต่ยื่นราคาไม่ได้จนถึงเวลาเปิด</span>
+          </footer>
         </div>
       )}
 

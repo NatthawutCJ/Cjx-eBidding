@@ -1005,6 +1005,7 @@ function viewFeed(){
 /* ---------------- buyer dashboard ---------------- */
 function viewDash(){
   const live = state.tenders.filter(t=>statusOf(t)==='live');
+  const soon = state.tenders.filter(t=>statusOf(t)==='scheduled');   // ตั้งเวลาเปิดไว้ล่วงหน้า
   const toUnseal = state.tenders.filter(t=>t.type==='sealed' && !t.unsealedAt && statusOf(t)==='closed');
   const bidsToday = state.bids.filter(b=>Date.now()-b.at < DAY).length;
   const done = state.tenders.filter(t=>t.awardedTo);
@@ -1012,14 +1013,18 @@ function viewDash(){
   return `<div class="page">
     <div class="pagehead"><div class="grow stack" style="gap:.2rem">
       <span class="eyebrow">ภาพรวมฝ่ายจัดซื้อ</span><h1>สวัสดี ${esc(me().name.split(' ')[0])}</h1>
-      <p class="muted">${live.length} งานกำลังเปิดรับราคา · ${toUnseal.length} งานรอเปิดซอง</p></div>
+      <p class="muted">${live.length} งานกำลังเปิดรับราคา${soon.length?` · ${soon.length} งานรอถึงเวลาเปิด`:''} · ${toUnseal.length} งานรอเปิดซอง</p></div>
       <button class="btn primary" data-act="sheet:create">${ICON.plus} สร้างประกาศ</button></div>
     <div class="grid g4">
       <div class="stat"><span class="eyebrow">เปิดรับราคา</span><span class="v">${live.length}</span><span class="dim">จากทั้งหมด ${state.tenders.length} ประกาศ</span></div>
+      <div class="stat"><span class="eyebrow">รอถึงเวลาเปิด</span><span class="v" style="color:${soon.length?'var(--warn)':'inherit'}">${soon.length}</span><span class="dim">ตั้งเวลาไว้ล่วงหน้า</span></div>
       <div class="stat"><span class="eyebrow">ใบเสนอราคา 24 ชม.</span><span class="v">${bidsToday}</span><span class="dim">รวมการปรับราคา</span></div>
       <div class="stat"><span class="eyebrow">รอเปิดซอง</span><span class="v" style="color:${toUnseal.length?'var(--warn)':'inherit'}">${toUnseal.length}</span><span class="dim">ต้องดำเนินการ</span></div>
       <div class="stat"><span class="eyebrow">ประหยัดจากงบ (ปิดจบ)</span><span class="v" style="color:var(--good)">${baht(saved)}</span><span class="dim">${done.length} ประกาศ</span></div>
     </div>
+    ${soon.length?`<div class="card"><header><h3>ยังไม่เปิดรับราคา</h3><span class="chip warn">${soon.length}</span></header>
+      <div class="tlist">${soon.map(tenderRow).join('')}</div>
+      <footer style="padding:.7rem 1rem;border-top:1px solid var(--line)"><span class="dim">ผู้ขายที่ถูกเชิญเห็นประกาศและดาวน์โหลดเอกสารได้แล้ว แต่ยื่นราคาไม่ได้จนถึงเวลาเปิด</span></footer></div>`:''}
     ${toUnseal.length?`<div class="card"><header><h3>รอเปิดซอง</h3><span class="chip warn">${toUnseal.length}</span></header>
       <div class="tlist">${toUnseal.map(tenderRow).join('')}</div></div>`:''}
     <div class="split">
