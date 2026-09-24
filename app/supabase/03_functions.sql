@@ -199,7 +199,10 @@ begin
               else s.name || (case when v_is_new then ' ยื่นใบเสนอราคา' else ' ปรับราคาใหม่' end)
                    || ' (ราคาปิดผนึกไว้จนเปิดซอง)'
          end,
-         (v_t.type = 'sealed')
+         -- ปิดจากผู้ขายทุกกรณี ไม่ว่างานเปิดหรือปิดราคา
+         -- กระดานราคาสดปิดชื่อคู่แข่งเป็น "ผู้เสนอราคา A/B/C" อยู่แล้ว
+         -- ถ้าปล่อยให้ความเคลื่อนไหวโชว์ชื่อบริษัทจริงคู่กับราคา ก็เท่ากับเฉลยว่าใครเป็นใคร
+         true
   from public.suppliers s where s.id = v_supplier;
 
   return v_bid.id;
@@ -247,9 +250,10 @@ begin
          closes_at = least(closes_at, now())
    where id = v_t.id;
 
-  insert into public.tender_events (tender_id, actor_id, kind, message)
+  insert into public.tender_events (tender_id, actor_id, kind, message, buyer_only)
   select v_t.id, auth.uid(), 'award',
-         'ประกาศผู้ชนะ ' || v_t.code || ': ' || s.name || ' ที่ ฿' || to_char(v_b.total,'FM999,999,999')
+         'ประกาศผู้ชนะ ' || v_t.code || ': ' || s.name || ' ที่ ฿' || to_char(v_b.total,'FM999,999,999'),
+         true          -- เฉลยชื่อผู้ชนะพร้อมราคา ให้เห็นเฉพาะฝ่ายจัดซื้อ
   from public.suppliers s where s.id = v_b.supplier_id;
 end $$;
 

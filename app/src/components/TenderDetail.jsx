@@ -281,18 +281,21 @@ export default function TenderDetail({ id, profile, onBack }) {
             </div>
           )}
 
-          <div className="card">
-            <header><h3>ความเคลื่อนไหว</h3></header>
-            <div className="body">
-              {t.events.length ? (
-                <div className="feed">
-                  {t.events.map(e => (
-                    <div className="ev" key={e.id}><time>{clock(e.created_at)}</time><span>{e.message}</span></div>
-                  ))}
-                </div>
-              ) : <p className="dim">ยังไม่มีความเคลื่อนไหวในรอบนี้</p>}
+          {/* ฝ่ายจัดซื้อเท่านั้น — ฟีดบอกว่าใครเข้ามายื่นราคาบ้าง ผู้ขายไม่ควรรู้ */}
+          {isBuyer && (
+            <div className="card">
+              <header><h3>ความเคลื่อนไหว</h3></header>
+              <div className="body">
+                {t.events.length ? (
+                  <div className="feed">
+                    {t.events.map(e => (
+                      <div className="ev" key={e.id}><time>{clock(e.created_at)}</time><span>{e.message}</span></div>
+                    ))}
+                  </div>
+                ) : <p className="dim">ยังไม่มีความเคลื่อนไหวในรอบนี้</p>}
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
     </div>

@@ -844,7 +844,8 @@ function statsHtml(t){
              :`<span class="dim">${all.length?'ยังไม่ถึงเป้า ต่างอีก '+baht(best-t.target):'รอผู้ยื่นราคา'}</span>`}</div>`;})():''}`;
 }
 function feedCard(t){
-  const evs = state.events.filter(e=>e.tenderId===t.id && (isBuyer() || !e.buyerOnly)).slice(0,12);
+  if (!isBuyer()) return '';        // ผู้ขายไม่เห็นความเคลื่อนไหวของงาน
+  const evs = state.events.filter(e=>e.tenderId===t.id).slice(0,12);
   return `<div class="card"><header><h3>ความเคลื่อนไหว</h3></header><div class="body">
     ${evs.length?`<div class="feed">${evs.map(e=>`<div class="ev"><time>${clock(e.at)}</time><span>${esc(e.text)}</span></div>`).join('')}</div>`
       :`<p class="dim">ยังไม่มีความเคลื่อนไหวในรอบนี้</p>`}
@@ -1178,7 +1179,8 @@ function viewForcePw(){
 /* ---------------- shell ---------------- */
 const NAV = {
   buyer:    [['dash','ภาพรวม',ICON.chart],['list','ประกาศประมูล',ICON.list],['feed','ความเคลื่อนไหว',ICON.bolt]],
-  supplier: [['list','ประกาศประมูล',ICON.list],['mybids','ราคาของฉัน',ICON.tag],['feed','ความเคลื่อนไหว',ICON.bolt]],
+  // ผู้ขายไม่มีเมนูความเคลื่อนไหว — ฟีดเฉลยว่าใครเข้ามาสู้ราคาบ้าง ขัดกับการปิดชื่อคู่แข่งในกระดานราคา
+  supplier: [['list','ประกาศประมูล',ICON.list],['mybids','ราคาของฉัน',ICON.tag]],
 };
 function navItems(){
   const items = NAV[me().role];
@@ -1197,7 +1199,7 @@ function render(){
   if (needPwChange()){ app.innerHTML = viewForcePw(); toastHost(); return; }
   const body = state.view==='detail' ? viewDetail()
     : state.view==='mybids' ? viewMyBids()
-    : state.view==='feed'   ? viewFeed()
+    : (state.view==='feed' && isBuyer()) ? viewFeed()
     : state.view==='dash'   ? viewDash() : viewList();
   const items = navItems();
   const controls = `<b>โหมดสาธิต</b>

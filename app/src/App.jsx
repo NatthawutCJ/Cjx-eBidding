@@ -15,7 +15,8 @@ import AdminUsers from './components/AdminUsers.jsx'
 const NAV = {
   buyer: [['dash', 'ภาพรวม', ICON.chart], ['list', 'ประกาศประมูล', ICON.list],
           ['users', 'ผู้ใช้และผู้ขาย', ICON.tag], ['feed', 'ความเคลื่อนไหว', ICON.bolt]],
-  supplier: [['list', 'ประกาศประมูล', ICON.list], ['mybids', 'ราคาของฉัน', ICON.tag], ['feed', 'ความเคลื่อนไหว', ICON.bolt]],
+  // ผู้ขายไม่มีเมนูความเคลื่อนไหว — ฟีดเฉลยว่าใครเข้ามาสู้ราคาบ้าง ซึ่งขัดกับการปิดชื่อคู่แข่งในกระดานราคา
+  supplier: [['list', 'ประกาศประมูล', ICON.list], ['mybids', 'ราคาของฉัน', ICON.tag]],
 }
 
 export default function App() {
@@ -101,7 +102,7 @@ function Shell({ profile }) {
     body = <AdminUsers profile={profile} />
   } else if (view === 'mybids') {
     body = <MyBids tenders={tenders} profile={profile} onOpen={open} />
-  } else if (view === 'feed') {
+  } else if (view === 'feed' && profile.role === 'buyer') {
     body = <Feed tenders={tenders} onOpen={open} />
   } else {
     body = <TenderList tenders={tenders} profile={profile} onOpen={open} onCreate={() => setSheet('create')} />
